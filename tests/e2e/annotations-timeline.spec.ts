@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { openDisplay, openPresenter, serverState, waitForRev } from './helpers';
+import { closeTracked, openDisplay, openPresenter, serverState, waitForRev } from './helpers';
+
+test.afterEach(closeTracked);
 import { frameRect, transformFor, toScreen } from '../../src/lib/map/camera';
 import { project } from '../../src/lib/map/projection';
 import { LAYOUTS } from '../../src/lib/sync/state';

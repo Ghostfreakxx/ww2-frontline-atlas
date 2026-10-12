@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { openDisplay, openPresenter, serverState, waitForRev } from './helpers';
+import { closeTracked, openDisplay, openPresenter, serverState, track, waitForRev } from './helpers';
+
+test.afterEach(closeTracked);
 
 test.describe('two-window synchronisation', () => {
   test('presenter actions reach the audience display quickly', async ({ browser, request }) => {
@@ -53,7 +55,7 @@ test.describe('two-window synchronisation', () => {
 
   test('a second presenter device stays in step', async ({ browser, request }) => {
     const a = await openPresenter(browser);
-    const ctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
+    const ctx = track(await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true }));
     const b = await ctx.newPage();
     await b.goto(`/presenter?code=${a.code}#k=${a.token}`);
     await expect(b.locator('.conn.live')).toBeVisible();

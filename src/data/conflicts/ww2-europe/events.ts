@@ -79,7 +79,7 @@ export const events: TimelineEvent[] = [
   ev('1941-11-15', 'Second phase of Typhoon', 'Renewed offensive north and south of Moscow (15–18 November).', 'east', 'operation', R('stahel-moscow'), { operationId: 'typhoon' }),
   ev('1941-11-21', 'Rostov taken', '', 'east', 'capture', R('glantz-house'), { placeId: 'rostov' }),
   ev('1941-11-29', 'Rostov retaken by the Red Army', 'First major German withdrawal of the war; Rundstedt resigns on 1 December.', 'east', 'turning-point', R('glantz-house'), { placeId: 'rostov', operationId: 'rostov-1941', major: true }),
-  ev('1941-12-02', 'Closest approach to Moscow', 'German reconnaissance elements near Khimki; front at Krasnaya Polyana about 30 km from the Kremlin.', 'east', 'battle', R('stahel-moscow'), { placeId: 'krasnaya-polyana' }),
+  ev('1941-12-02', 'Closest approach to Moscow', 'The front at Krasnaya Polyana and the Volga–Moscow canal, about 30 km from the Kremlin. Accounts of German patrols reaching Khimki are disputed.', 'east', 'battle', R('stahel-moscow'), { placeId: 'krasnaya-polyana' }),
   ev('1941-12-05', 'Soviet counteroffensive at Moscow', 'The Kalinin Front attacks on 5 December, the Western Front on 6 December.', 'east', 'turning-point', R('stahel-moscow', 'glantz-house'), { operationId: 'moscow-counteroffensive', major: true, camera: { lon: 36.8, lat: 55.6, zoom: 3.8 } }),
   ev('1941-12-07', 'Pearl Harbor', 'Japan attacks the United States.', 'west', 'political', W),
   ev('1941-12-09', 'Tikhvin retaken', '', 'east', 'capture', R('glantz-leningrad'), { placeId: 'tikhvin' }),

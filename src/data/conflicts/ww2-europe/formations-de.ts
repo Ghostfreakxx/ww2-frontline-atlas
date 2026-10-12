@@ -33,7 +33,7 @@ export const germanArmyGroups: Formation[] = [
     commanders: [t('bock', '1939-09-01', '1939-10-09')],
     subordinates: [{ id: 'de-3-army-1939', from: '1939-09-01', to: '1939-10-09' }, { id: 'de-4-army', from: '1939-09-01', to: '1939-10-09' }],
     lineage: [
-      { date: '1939-08-26', type: 'formed', text: 'Formed on mobilisation from Army Group Command 1 (Heeresgruppenkommando 1).', sources: CMD, confidence: 'documented' },
+      { date: '1939-08-26', type: 'formed', text: 'Formed on mobilisation in late August 1939 from a peacetime army group command (Heeresgruppenkommando).', sources: CMD, confidence: 'approximate' },
       { date: '1939-10-10', type: 'redesignated', text: 'Moved west and redesignated Army Group B.', related: ['de-hg-b-1939'], sources: CMD, confidence: 'documented' },
     ],
     objectives: [{ from: '1939-09-01', text: 'Cut the Polish Corridor, then strike south from East Prussia across the Narew toward Warsaw and east of the Vistula.', kind: 'planned', sources: [{ id: 'kennedy-20-255' }], confidence: 'documented' }],
@@ -71,8 +71,8 @@ export const germanArmyGroups: Formation[] = [
     predecessor: 'de-hg-b-1939', successor: 'de-hg-north-1945',
     commanders: [
       t('bock', '1941-06-22', '1941-12-18', { note: 'Relieved on grounds of ill health during the Soviet counteroffensive.' }),
-      t('kluge', '1941-12-19', '1943-10-12', { note: 'Injured in a car accident, October 1943.' }),
-      t('busch', '1943-10-12', '1944-06-28', { note: 'Dismissed during Operation Bagration.' }),
+      t('kluge', '1941-12-19', '1943-10-28', { note: 'Badly injured in a car accident on the Minsk–Smolensk road (27 October 1943 in most accounts).' }),
+      t('busch', '1943-10-29', '1944-06-28', { note: 'Dismissed during Operation Bagration. Some references date his appointment to 12 October 1943.' }),
       t('model', '1944-06-28', '1944-08-16'),
       t('reinhardt', '1944-08-16', '1945-01-25'),
     ],
@@ -136,7 +136,7 @@ export const germanArmyGroups: Formation[] = [
     commanders: [t('rundstedt', '1939-09-01', '1939-10-24')],
     subordinates: [{ id: 'de-8-army-1939', from: '1939-09-01', to: '1939-10-24' }, { id: 'de-10-army-1939', from: '1939-09-01', to: '1939-10-24' }, { id: 'de-14-army-1939', from: '1939-09-01', to: '1939-10-24' }],
     lineage: [
-      { date: '1939-08-26', type: 'formed', text: 'Formed on mobilisation from Army Group Command 2 staff resources (Rundstedt recalled from retirement).', sources: CMD, confidence: 'approximate' },
+      { date: '1939-08-26', type: 'formed', text: 'Formed on mobilisation in late August 1939; Rundstedt was recalled from retirement to command it.', sources: CMD, confidence: 'approximate' },
       { date: '1939-10-25', type: 'redesignated', text: 'Redesignated Army Group A in the west.', related: ['de-hg-a-1939'], sources: CMD, confidence: 'documented' },
     ],
     objectives: [{ from: '1939-09-01', text: 'Main effort: advance from Silesia and Slovakia on Warsaw and destroy the Polish army west of the Vistula.', kind: 'planned', sources: [{ id: 'kennedy-20-255' }], confidence: 'documented' }],
@@ -285,7 +285,12 @@ export const germanArmyGroups: Formation[] = [
     short: 'AG Courland',
     existence: { from: '1945-01-25', to: '1945-05-09' },
     predecessor: 'de-hg-north',
-    commanders: [t('rendulic', '1945-01-25', '1945-01-27', { acting: true }), t('vietinghoff', '1945-01-27', '1945-03-10'), t('rendulic', '1945-03-10', '1945-04-06'), t('hilpert', '1945-04-06', '1945-05-09')],
+    commanders: [
+      t('rendulic', '1945-01-25', '1945-01-27'),
+      t('vietinghoff', '1945-01-29', '1945-03-10'),
+      t('rendulic', '1945-03-12', '1945-03-25'),
+      t('hilpert', '1945-03-25', '1945-05-09', { note: 'Hand-over dates in March 1945 differ by a few days between references.' }),
+    ],
     lineage: [{ date: '1945-05-09', type: 'surrendered', text: 'Surrendered to the Red Army after the general capitulation.', sources: EAST42_45, confidence: 'documented' }],
     operations: ['courland-1945'],
     fate: 'Surrendered 9 May 1945; about 180,000–190,000 men went into Soviet captivity (figures vary by source).',

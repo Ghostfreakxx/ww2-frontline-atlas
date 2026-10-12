@@ -87,9 +87,7 @@ export const sovietFronts: Formation[] = [
     commanders: [
       t('pavlov', '1941-06-22', '1941-06-30', 'Arrested and executed (July 1941).'),
       t('yeremenko', '1941-06-30', '1941-07-02'),
-      t('timoshenko', '1941-07-02', '1941-07-19'),
-      t('yeremenko', '1941-07-19', '1941-07-29'),
-      t('timoshenko', '1941-07-30', '1941-09-12'),
+      t('timoshenko', '1941-07-02', '1941-09-12', 'Also commander of the Western Direction; Yeremenko briefly commanded the front in late July. References differ on the exact hand-overs.'),
       t('konev', '1941-09-12', '1941-10-10'),
       t('zhukov', '1941-10-10', '1942-08-26'),
     ],

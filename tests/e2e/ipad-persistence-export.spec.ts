@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
-import { IPAD_LANDSCAPE, IPAD_PORTRAIT, openDisplay, openPresenter, serverState } from './helpers';
+import { closeTracked, IPAD_LANDSCAPE, IPAD_PORTRAIT, openDisplay, openPresenter, serverState, track } from './helpers';
+
+test.afterEach(closeTracked);
 import { project } from '../../src/lib/map/projection';
 
 for (const [name, viewport] of [['landscape', IPAD_LANDSCAPE], ['portrait', IPAD_PORTRAIT]] as const) {
@@ -108,7 +110,7 @@ test('accessibility: no serious or critical axe violations', async ({ browser })
     const r = await new AxeBuilder({ page: p }).disableRules(['region']).analyze();
     for (const v of r.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')) results.push(`${label}: ${v.id} (${v.nodes.length}) ${v.help} — ${v.nodes.slice(0, 6).map((n) => n.target.join(' ')).join(' | ')}`);
   }
-  const home = await (await browser.newContext()).newPage();
+  const home = await track(await browser.newContext()).newPage();
   for (const path of ['/', '/sources']) {
     await home.goto(path);
     const r = await new AxeBuilder({ page: home }).analyze();

@@ -252,12 +252,15 @@ html.transparent .display-root {
   background: rgba(22, 23, 24, 0.86);
   border: 1px solid var(--line-2);
   backdrop-filter: blur(8px);
-  transition: opacity 300ms;
+  transition: opacity 300ms, visibility 0s;
   z-index: 10;
 }
+/* Fully hidden (not just transparent) while idle, so it is out of the tab order and the accessibility tree. */
 .display-toolbar.hidden {
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
+  transition: opacity 300ms, visibility 0s 300ms;
 }
 .conn-pill {
   position: fixed;

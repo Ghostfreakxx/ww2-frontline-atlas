@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { openDisplay, openPresenter, serverState, waitForRev } from './helpers';
+import { closeTracked, openDisplay, openPresenter, serverState, track, waitForRev } from './helpers';
+
+test.afterEach(closeTracked);
 
 test.describe('reconnection and session recovery', () => {
   test('display reconnects and catches up after a network drop', async ({ browser, request }) => {
@@ -36,7 +38,7 @@ test.describe('reconnection and session recovery', () => {
   });
 
   test('display waits for a session that does not exist yet', async ({ browser }) => {
-    const ctx = await browser.newContext();
+    const ctx = track(await browser.newContext());
     const page = await ctx.newPage();
     await page.goto('/display?code=ZZZZZZ');
     await expect(page.getByText(/not found/)).toBeVisible();

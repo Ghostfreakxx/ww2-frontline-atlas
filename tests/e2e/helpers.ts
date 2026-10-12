@@ -1,11 +1,24 @@
-import { expect, type Browser, type Page, type APIRequestContext } from '@playwright/test';
+import { expect, type Browser, type BrowserContext, type Page, type APIRequestContext } from '@playwright/test';
+
+// Contexts opened by the helpers are closed after every test, so earlier tests' pages
+// (live SSE streams, animation loops) do not keep rendering in the shared browser.
+const openContexts = new Set<BrowserContext>();
+export function track(ctx: BrowserContext) {
+  openContexts.add(ctx);
+  return ctx;
+}
+/** Call from `test.afterEach` in every spec file. */
+export async function closeTracked() {
+  await Promise.all([...openContexts].map((c) => c.close().catch(() => {})));
+  openContexts.clear();
+}
 
 export const IPAD_LANDSCAPE = { width: 1180, height: 820 };
 export const IPAD_PORTRAIT = { width: 820, height: 1180 };
 
 /** Open the presenter on an iPad-sized touch context; returns the page and its session code/token. */
 export async function openPresenter(browser: Browser, viewport = IPAD_LANDSCAPE) {
-  const ctx = await browser.newContext({ viewport, hasTouch: true, deviceScaleFactor: 1, userAgent: 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1' });
+  const ctx = track(await browser.newContext({ viewport, hasTouch: true, deviceScaleFactor: 1, userAgent: 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1' }));
   const page = await ctx.newPage();
   await page.goto('/presenter');
   await expect(page.locator('.conn.live')).toBeVisible({ timeout: 15_000 });
@@ -17,7 +30,7 @@ export async function openPresenter(browser: Browser, viewport = IPAD_LANDSCAPE)
 }
 
 export async function openDisplay(browser: Browser, code: string, query = '') {
-  const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
+  const ctx = track(await browser.newContext({ viewport: { width: 1920, height: 1080 } }));
   const page = await ctx.newPage();
   await page.goto(`/display?code=${code}${query}`);
   await expect(page.locator('.display-root[data-status="live"] svg').first()).toBeVisible({ timeout: 15_000 });
