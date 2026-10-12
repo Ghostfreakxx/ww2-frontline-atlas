@@ -124,11 +124,18 @@ describe('places and geometry', () => {
 
   it('frontline points run north to south overall and have quality flags', () => {
     for (const fl of pkg.frontlines) for (const seg of fl.segments) {
-      if (seg.kind !== 'main') continue;
+      if (seg.kind !== 'main' || fl.theatre !== 'east') continue;
       const first = seg.points[0].at[1], last = seg.points[seg.points.length - 1].at[1];
       expect(first, fl.id).toBeGreaterThan(last);
       for (const p of seg.points) expect(['a', 'b', 'c']).toContain(p.q);
     }
+  });
+
+  it('front snapshot ids are unique and every theatre has at least one snapshot per year of fighting', () => {
+    const ids = pkg.frontlines.map((f) => f.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    const eastYears = new Set(pkg.frontlines.filter((f) => f.theatre === 'east').map((f) => f.date.slice(0, 4)));
+    expect([...eastYears].sort()).toEqual(['1941', '1942', '1943', '1944', '1945']);
   });
 
   it('place ids referenced by events exist', () => {

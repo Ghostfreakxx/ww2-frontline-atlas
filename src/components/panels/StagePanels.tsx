@@ -96,67 +96,66 @@ export function CommanderCard({ x, y, w, idx, f, date, scale, showPortrait }: { 
   const c = idx.commanderAt(f, date);
   const name = idx.nameAt(f, date);
   const color = formationColor(idx, f, date) ?? f.color ?? AXIS_ARROW;
-  const subs = idx.subordinatesAt(f, date).filter((x) => !x.snapshot && ['army', 'panzer-group', 'panzer-army'].includes(x.f.echelon));
+  const subs = idx.subordinatesAt(f, date).filter((x) => !x.snapshot && ['army', 'panzer-group', 'panzer-army', 'front'].includes(x.f.echelon));
   const obj = idx.objectivesAt(f, date)[0];
-  const hq = (f.hq ?? []).find((h) => date >= h.from && (!h.to || date <= h.to));
-  const pad = 24 * s;
-  const portraitW = showPortrait ? 112 * s : 0;
-  const textX = x + pad + (showPortrait ? portraitW + 20 * s : 0);
-  const textW = w - (textX - x) - pad;
-  const lines: ReactNode[] = [];
-  let cy = y + 74 * s;
+  const pad = 22 * s;
+  const portraitW = showPortrait ? 84 * s : 0;
+  const portraitH = 104 * s;
+  const textX = x + pad + (showPortrait ? portraitW + 16 * s : 0);
   const commanderName = c?.person?.name ?? 'Commander not recorded';
-  lines.push(<text key="cn" x={textX} y={cy + 30 * s} fontFamily={FONT_SERIF} fontWeight={600} fontSize={28 * s} fill={INK}>{commanderName}</text>);
-  cy += 30 * s;
-  if (c?.rank) {
-    cy += 26 * s;
-    lines.push(<text key="rk" x={textX} y={cy} fontFamily={FONT_SANS} fontSize={18 * s} fill={INK_SOFT}>{c.rank}</text>);
-  }
-  if (c) {
-    cy += 24 * s;
-    const since = c.status === 'snapshot' ? `As of ${formatDate(c.tenure.snapshot!, 'short')}` : c.status === 'last-recorded' ? `Last recorded from ${formatDate(c.tenure.from, 'short')}` : `In command ${formatRange(c.tenure.from, c.tenure.to ?? undefined)}`.replace(/–\s*$/, '');
-    lines.push(<text key="since" x={textX} y={cy} fontFamily={FONT_SANS} fontSize={16 * s} fill={INK_SOFT}>{c.tenure.to ? since : `In command from ${formatDate(c.tenure.from, 'short')}`}</text>);
-  }
-  cy = Math.max(cy, y + 74 * s + (showPortrait ? 140 * s : 0));
+  const nameSize = textWidth(commanderName, 25 * s, FONT_SERIF, 600) > w - (textX - x) - pad ? 21 * s : 25 * s;
+  const tenure = !c
+    ? ''
+    : c.status === 'snapshot'
+      ? `As of ${formatDate(c.tenure.snapshot!, 'short')}`
+      : c.status === 'last-recorded'
+        ? `Last recorded from ${formatDate(c.tenure.from, 'short')}`
+        : c.tenure.to
+          ? `In command ${formatRange(c.tenure.from, c.tenure.to)}`
+          : `In command from ${formatDate(c.tenure.from, 'short')}`;
+  let cy = y + 62 * s + Math.max(portraitH, 80 * s) + 18 * s;
   const rows: ReactNode[] = [];
-  const row = (label: string, value: string, key: string) => {
-    const wrapped = wrapText(value, 17 * s, FONT_SANS, w - pad * 2 - 110 * s);
+  const row = (label: string, value: string, maxLines: number, key: string) => {
+    const wrapped = wrapText(value, 15.5 * s, FONT_SANS, w - pad * 2 - 92 * s);
+    const lines = wrapped.slice(0, maxLines);
+    if (wrapped.length > maxLines) lines[maxLines - 1] = lines[maxLines - 1].replace(/\s*\S*$/, '') + '…';
     rows.push(
       <g key={key}>
-        <text x={x + pad} y={cy + 22 * s} fontFamily={FONT_SANS} fontWeight={600} fontSize={13.5 * s} letterSpacing="0.08em" fill={INK_SOFT}>{label.toUpperCase()}</text>
-        {wrapped.slice(0, 4).map((l, i) => (
-          <text key={i} x={x + pad + 110 * s} y={cy + 22 * s + i * 22 * s} fontFamily={FONT_SANS} fontSize={17 * s} fill={INK}>{l}</text>
+        <text x={x + pad} y={cy} fontFamily={FONT_SANS} fontWeight={600} fontSize={12.5 * s} letterSpacing="0.08em" fill={INK_SOFT}>{label.toUpperCase()}</text>
+        {lines.map((l, i) => (
+          <text key={i} x={x + pad + 92 * s} y={cy + i * 20 * s} fontFamily={FONT_SANS} fontSize={15.5 * s} fill={INK}>{l}</text>
         ))}
       </g>,
     );
-    cy += Math.max(1, Math.min(4, wrapped.length)) * 22 * s + 10 * s;
+    cy += lines.length * 20 * s + 10 * s;
   };
-  cy += 8 * s;
-  if (hq) row('HQ', hq.text, 'hq');
-  if (subs.length) row('Armies', subs.map((x) => idx.nameAt(x.f, date)).join(' · '), 'subs');
-  if (obj) row(obj.kind === 'planned' ? 'Objective' : obj.kind === 'defensive' ? 'Task' : 'Revised aim', obj.text, 'obj');
+  if (subs.length) row(f.side === 'soviet' ? 'Armies' : 'Armies', subs.map((x) => idx.nameAt(x.f, date)).join(' · '), 2, 'subs');
+  if (obj) row(obj.kind === 'planned' ? 'Objective' : obj.kind === 'defensive' ? 'Task' : 'Revised aim', obj.text, 3, 'obj');
   const srcIds = [...(c?.tenure.sources ?? []).map((r) => r.id), ...(f.sources ?? []).map((r) => r.id)];
-  const h = cy - y + 40 * s;
+  const h = cy - y + 22 * s;
+  const py = y + 62 * s;
   return (
     <Card x={x} y={y} w={w} h={h} accent={color}>
-      <text x={x + pad} y={y + 40 * s} fontFamily={FONT_SANS} fontWeight={700} fontSize={25 * s} fill={color}>{name}</text>
-      <text x={x + pad} y={y + 62 * s} fontFamily={FONT_SANS} fontSize={14.5 * s} letterSpacing="0.06em" fill={INK_SOFT}>{(f.side === 'axis' ? 'GERMAN ' : f.side === 'soviet' ? 'SOVIET ' : 'ALLIED ') + f.echelon.replace('-', ' ').toUpperCase()}</text>
+      <text x={x + pad} y={y + 34 * s} fontFamily={FONT_SANS} fontWeight={700} fontSize={22 * s} fill={color}>{name}</text>
+      <text x={x + pad} y={y + 52 * s} fontFamily={FONT_SANS} fontSize={12.5 * s} letterSpacing="0.08em" fill={INK_SOFT}>{(f.side === 'axis' ? 'GERMAN ' : f.side === 'soviet' ? 'SOVIET ' : 'ALLIED ') + f.echelon.replace('-', ' ').toUpperCase()}</text>
       {showPortrait && (
         <g>
-          <rect x={x + pad} y={y + 80 * s} width={portraitW} height={136 * s} rx={4} fill="#e6e0d2" stroke={CARD_EDGE} />
+          <rect x={x + pad} y={py} width={portraitW} height={portraitH} rx={4} fill="#e6e0d2" stroke={CARD_EDGE} />
           {c?.person?.portrait ? (
-            <image href={c.person.portrait.src} x={x + pad} y={y + 80 * s} width={portraitW} height={136 * s} preserveAspectRatio="xMidYMid slice" />
+            <image href={c.person.portrait.src} x={x + pad} y={py} width={portraitW} height={portraitH} preserveAspectRatio="xMidYMid slice" />
           ) : (
             <g>
-              <text x={x + pad + portraitW / 2} y={y + 160 * s} textAnchor="middle" fontFamily={FONT_SERIF} fontWeight={600} fontSize={44 * s} fill="#9a917f">{initials(commanderName)}</text>
-              <text x={x + pad + portraitW / 2} y={y + 202 * s} textAnchor="middle" fontFamily={FONT_SANS} fontSize={10.5 * s} fill="#9a917f">no licensed portrait</text>
+              <text x={x + pad + portraitW / 2} y={py + 60 * s} textAnchor="middle" fontFamily={FONT_SERIF} fontWeight={600} fontSize={34 * s} fill="#9a917f">{initials(commanderName)}</text>
+              <text x={x + pad + portraitW / 2} y={py + 90 * s} textAnchor="middle" fontFamily={FONT_SANS} fontSize={9.5 * s} fill="#9a917f">no licensed portrait</text>
             </g>
           )}
         </g>
       )}
-      {lines}
+      <text x={textX} y={py + 26 * s} fontFamily={FONT_SERIF} fontWeight={600} fontSize={nameSize} fill={INK}>{commanderName}</text>
+      {c?.rank && <text x={textX} y={py + 52 * s} fontFamily={FONT_SANS} fontSize={16 * s} fill={INK_SOFT}>{c.rank}</text>}
+      {tenure && <text x={textX} y={py + 76 * s} fontFamily={FONT_SANS} fontSize={14.5 * s} fill={INK_SOFT}>{tenure}</text>}
       {rows}
-      <text x={x + pad} y={y + h - 16 * s} fontFamily={FONT_SANS} fontSize={12.5 * s} fill={INK_SOFT}>Sources: {sourcesText(srcIds, 3)}</text>
+      <text x={x + pad} y={y + h - 12 * s} fontFamily={FONT_SANS} fontSize={11.5 * s} fill={INK_SOFT}>Sources: {sourcesText(srcIds, 3)}</text>
     </Card>
   );
 }
@@ -231,7 +230,10 @@ export function ComparePanel({ x, y, w, idx, ids, date, scale }: { x: number; y:
   const front = idx.frontAt('east', date);
   const rows: [string, (f: Formation) => string][] = [
     ['Date', () => formatDate(date)],
-    ['Sector', (f) => idx.sectorAt(f, date)?.label.replace('Approximate operational sector', 'Approx. sector') ?? (f.theatre ? `${f.theatre} theatre` : '—')],
+    ['Sector', (f) => {
+      const sec = idx.sectorAt(f, date);
+      return sec ? `${sec.label} (approximate)` : f.theatre ? `${f.theatre} theatre` : '—';
+    }],
     ['Commander', (f) => {
       const c = idx.commanderAt(f, date);
       return c?.person ? `${c.rank ? c.rank + ' ' : ''}${c.person.name}` : '—';

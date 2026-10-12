@@ -1,5 +1,6 @@
-{
-  "comment": "Shared map projection. World units: the default Europe extent fits a 1600 x 1000 frame. Used by the client renderer and the relief build script.",
+// Shared map projection config. World units: the default Europe extent fits a 1600 x 1000 frame.
+// Used by the client renderer and the Node build scripts (relief, territory).
+export const projectionConfig = {
   "type": "conicConformal",
   "parallels": [
     40,
@@ -23,4 +24,4 @@
     88,
     78
   ]
-}
+} as const;

@@ -53,7 +53,15 @@ export const DisplayStage = forwardRef<SVGSVGElement, DisplayStageProps>(functio
   const showUi = !state.hideUi;
   const scale = 1;
   const front = idx.frontsAt(date)[0];
-  const frontLabel = state.layers.front && front ? (front.date === date ? 'Front line on this date' : `Front line as of ${formatDate(front.date, 'short')}`) : null;
+  const frontLabel = !state.layers.front
+    ? null
+    : front
+      ? front.date === date
+        ? 'Front line on this date'
+        : `Front line as of ${formatDate(front.date, 'short')}`
+      : idx.pkg.frontlines.some((f) => f.date <= date)
+        ? 'No documented front line for this date'
+        : null;
   const terr = geo.territories.get(idx.territoryAt(date)?.id ?? '');
   const statusOrder = ['reich', 'german-occupied', 'axis', 'soviet', 'allied', 'neutral'];
   const statuses = state.layers.territory && terr ? statusOrder.filter((s) => terr.some((u) => u.status === s)) : [];
@@ -64,7 +72,7 @@ export const DisplayStage = forwardRef<SVGSVGElement, DisplayStageProps>(functio
   const hierarchyOn = state.panels.hierarchy && !!state.hierarchy.rootId;
   const compareOn = state.panels.compare && focus.length >= 2;
   const commanderOn = state.panels.commander && focus.length >= 1 && !(hierarchyOn && map.w < 1500) && !compareOn;
-  const cardW = map.w < 1500 ? 470 : 500;
+  const cardW = map.w < 1500 ? 420 : 460;
   const topY = panelRegion.y + 40 + (state.caption ? 120 : 0);
 
   return (

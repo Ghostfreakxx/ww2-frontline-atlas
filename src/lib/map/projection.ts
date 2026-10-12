@@ -1,8 +1,8 @@
-import cfg from '../../data/geo/projection.json';
+import { projectionConfig as cfg } from '../../data/geo/projection.ts';
 import { makeProjection } from './makeProjection.mjs';
 import type { LonLat } from '../history/types.ts';
 
-export const projection = makeProjection(cfg);
+export const projection = makeProjection({ ...cfg, parallels: [...cfg.parallels], rotate: [...cfg.rotate] });
 export const WORLD = { w: cfg.worldWidth, h: cfg.worldHeight };
 
 export const project = (ll: LonLat): [number, number] => projection(ll) as [number, number];

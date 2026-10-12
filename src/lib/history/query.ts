@@ -16,6 +16,8 @@ import type {
 // Date helpers ---------------------------------------------------------------
 
 const DAY = 86_400_000;
+/** A front snapshot older than this is not drawn (the line would mislead). */
+export const STALE_LIMIT_DAYS = 90;
 export const toTime = (d: ISODate) => Date.parse(d + 'T00:00:00Z');
 export const fromTime = (t: number): ISODate => new Date(t).toISOString().slice(0, 10);
 export const addDays = (d: ISODate, n: number): ISODate => fromTime(toTime(d) + Math.round(n) * DAY);
@@ -168,18 +170,22 @@ export class ConflictIndex {
     return i > 0 ? list[i - 1] : undefined;
   }
 
-  /** Fronts to show on a date: one per theatre, only within the theatre's active period. */
+  /**
+   * Fronts to show on a date: per theatre, the latest snapshot on or before the date — unless it has
+   * ended (`endsAt`) or is older than STALE_LIMIT_DAYS, in which case no line is shown rather than an
+   * outdated one.
+   */
   frontsAt(date: ISODate): FrontlineSnapshot[] {
     const out: FrontlineSnapshot[] = [];
-    for (const [theatre, list] of this.frontsByTheatre) {
+    for (const theatre of this.frontsByTheatre.keys()) {
       const f = this.frontAt(theatre, date);
       if (!f) continue;
-      const last = list[list.length - 1];
-      // A theatre's final snapshot stays visible for 60 days only, unless it is the end state.
-      if (f === last && f.date < date && Date.parse(date) - Date.parse(f.date) > 60 * DAY && !f.id.endsWith('final')) continue;
+      if (f.endsAt && date > f.endsAt) continue;
+      if (daysBetween(f.date, date) > STALE_LIMIT_DAYS) continue;
       out.push(f);
     }
-    return out;
+    // Eastern Front first: it is the primary theatre of the atlas.
+    return out.sort((a, b) => (a.theatre === 'east' ? -1 : b.theatre === 'east' ? 1 : 0));
   }
 
   territoryAt(date: ISODate) {

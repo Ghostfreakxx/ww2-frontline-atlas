@@ -92,6 +92,14 @@ export function useSessionStream(code: string | null, role: 'presenter' | 'displ
       if (document.visibilityState === 'visible' && (!es || es.readyState === EventSource.CLOSED)) scheduleRetry(50);
     };
     const onOnline = () => scheduleRetry(50);
+    // Test hook: simulate a dropped connection (used by the reconnection end-to-end test).
+    const onDebugDrop = () => {
+      es?.close();
+      es = null;
+      setStatus('reconnecting');
+      scheduleRetry(300);
+    };
+    window.addEventListener('atlas-debug-drop', onDebugDrop);
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('online', onOnline);
     return () => {
@@ -101,6 +109,7 @@ export function useSessionStream(code: string | null, role: 'presenter' | 'displ
       es?.close();
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('online', onOnline);
+      window.removeEventListener('atlas-debug-drop', onDebugDrop);
     };
   }, [code, role]);
 

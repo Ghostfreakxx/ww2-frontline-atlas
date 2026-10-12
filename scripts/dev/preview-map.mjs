@@ -1,8 +1,9 @@
 import fs from 'node:fs';
+import { projectionConfig } from '../../src/data/geo/projection.ts';
 import { geoPath } from 'd3-geo';
 import { makeProjection } from '../../src/lib/map/makeProjection.mjs';
 const root='./';
-const cfg=JSON.parse(fs.readFileSync(root+'src/data/geo/projection.json'));
+const cfg=projectionConfig;
 const proj=makeProjection(cfg); const path=geoPath(proj);
 const [territoryDate, frontId, view] = process.argv.slice(2);
 const terr=JSON.parse(fs.readFileSync(root+`public/geo/territory-${territoryDate}.json`));

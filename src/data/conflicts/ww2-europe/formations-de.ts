@@ -89,7 +89,7 @@ export const germanArmyGroups: Formation[] = [
       { id: 'de-pzgr-4', from: '1941-09-15', to: '1942-01-31', note: 'Transferred from Army Group North for Operation Typhoon.', confidence: 'documented' },
     ],
     sectors: [
-      { from: '1941-06-22', to: '1941-12-31', label: 'Approximate operational sector, June–December 1941', ring: [...AGN_AGC_BOUNDARY, [38.5, 57.4], [39.2, 55.6], ...AGC_AGS_BOUNDARY.slice().reverse()], sources: SECTOR_SRC, confidence: 'approximate', verification: 'reference-level' },
+      { from: '1941-06-22', to: '1941-12-31', label: 'Belorussia toward Smolensk and Moscow', ring: [...AGN_AGC_BOUNDARY, [38.5, 57.4], [39.2, 55.6], ...AGC_AGS_BOUNDARY.slice().reverse()], sources: SECTOR_SRC, confidence: 'approximate', verification: 'reference-level' },
     ],
     objectives: [
       { from: '1941-06-22', to: '1941-07-31', text: 'Destroy the Soviet forces in Belorussia by encirclement (Białystok–Minsk), then advance on Smolensk (Directive 21).', kind: 'planned', sources: [{ id: 'dir21' }], confidence: 'documented' },
@@ -187,7 +187,7 @@ export const germanArmyGroups: Formation[] = [
       { id: 'hu-carpathian-group', from: '1941-06-27', confidence: 'approximate' },
     ],
     sectors: [
-      { from: '1941-06-22', to: '1941-12-31', label: 'Approximate operational sector, June–December 1941', ring: [...AGC_AGS_BOUNDARY, [40.2, 51.0], [40.3, 47.0], [38.0, 46.4], [35.0, 45.0], [33.0, 44.3], [31.0, 45.5], [29.8, 45.2], [28.2, 45.45], [26.6, 48.1], [24.6, 48.0], [22.7, 49.4], [23.9, 50.5]], sources: SECTOR_SRC, confidence: 'approximate', verification: 'reference-level' },
+      { from: '1941-06-22', to: '1941-12-31', label: 'Ukraine toward Kiev, the Dnieper and the Donbas', ring: [...AGC_AGS_BOUNDARY, [40.2, 51.0], [40.3, 47.0], [38.0, 46.4], [35.0, 45.0], [33.0, 44.3], [31.0, 45.5], [29.8, 45.2], [28.2, 45.45], [26.6, 48.1], [24.6, 48.0], [22.7, 49.4], [23.9, 50.5]], sources: SECTOR_SRC, confidence: 'approximate', verification: 'reference-level' },
     ],
     objectives: [
       { from: '1941-06-22', text: 'Destroy Soviet forces west of the Dnieper in Galicia and western Ukraine with a main thrust toward Kiev, then gain the Dnieper crossings (Directive 21).', kind: 'planned', sources: [{ id: 'dir21' }], confidence: 'documented' },
@@ -261,7 +261,7 @@ export const germanArmyGroups: Formation[] = [
       { id: 'de-16-army', from: '1941-06-22' },
     ],
     sectors: [
-      { from: '1941-06-22', to: '1941-12-31', label: 'Approximate operational sector, June–December 1941', ring: [[21.0, 55.6], ...AGN_AGC_BOUNDARY, [34.5, 59.0], [34.5, 60.4], [31.5, 60.1], [30.0, 60.2], [28.0, 59.75], [23.4, 59.6], [21.6, 58.7], [21.0, 57.4]], sources: SECTOR_SRC, confidence: 'approximate', verification: 'reference-level' },
+      { from: '1941-06-22', to: '1941-12-31', label: 'Baltic states toward Leningrad', ring: [[21.0, 55.6], ...AGN_AGC_BOUNDARY, [34.5, 59.0], [34.5, 60.4], [31.5, 60.1], [30.0, 60.2], [28.0, 59.75], [23.4, 59.6], [21.6, 58.7], [21.0, 57.4]], sources: SECTOR_SRC, confidence: 'approximate', verification: 'reference-level' },
     ],
     objectives: [
       { from: '1941-06-22', text: 'Destroy Soviet forces in the Baltic region and take Leningrad and Kronstadt (Directive 21). Moscow was to follow only after Leningrad.', kind: 'planned', sources: [{ id: 'dir21' }], confidence: 'documented' },

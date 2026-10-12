@@ -28,7 +28,7 @@ interface Props {
   library: { episodes: Episode[]; save: (e: Episode) => void; remove: (id: string) => void; isBuiltIn: (id: string) => boolean; isModified: (id: string) => boolean; savedAt: number | null };
   episode: Episode | null;
   state: PresentationState;
-  onLoadEpisode: (id: string) => void;
+  onLoadEpisode: (id: string, ep?: Episode) => void;
   onGoto: (scene: number, step: number) => void;
   saveToServer: (e: Episode) => Promise<string>;
   locked: boolean;
@@ -58,7 +58,7 @@ export function EditorPanel({ library, episode, state, onLoadEpisode, onGoto, sa
       scenes: [{ id: uid('scene'), title: 'Opening', notes: '', sources: [], base: captureView(state), steps: [] }],
     };
     library.save(ep);
-    onLoadEpisode(ep.id);
+    onLoadEpisode(ep.id, ep);
   };
 
   return (
@@ -73,7 +73,7 @@ export function EditorPanel({ library, episode, state, onLoadEpisode, onGoto, sa
         </select>
         <div className="button-row">
           <button className="btn" onClick={newEpisode} disabled={locked}><Icon.plus /> New</button>
-          {episode && <button className="btn" disabled={locked} onClick={() => { const copy = { ...structuredClone(episode), id: uid(episode.id.slice(0, 40)), title: `${episode.title} (copy)` }; library.save(copy); onLoadEpisode(copy.id); }}>Duplicate</button>}
+          {episode && <button className="btn" disabled={locked} onClick={() => { const copy = { ...structuredClone(episode), id: uid(episode.id.slice(0, 40)), title: `${episode.title} (copy)` }; library.save(copy); onLoadEpisode(copy.id, copy); }}>Duplicate</button>}
           <button className="btn" onClick={() => fileRef.current?.click()} disabled={locked}><Icon.upload /> Import</button>
           {episode && <button className="btn" onClick={() => exportEpisode(episode)}><Icon.download /> Export</button>}
           {episode && (
@@ -94,7 +94,7 @@ export function EditorPanel({ library, episode, state, onLoadEpisode, onGoto, sa
             try {
               const ep = await importEpisodeFile(f);
               library.save(ep);
-              onLoadEpisode(ep.id);
+              onLoadEpisode(ep.id, ep);
               flash(`Imported “${ep.title}”`);
             } catch (err) {
               flash((err as Error).message);

@@ -7,7 +7,7 @@
   --line-2: rgba(255, 255, 255, 0.16);
   --text: #ece8de;
   --text-2: #b9b4a8;
-  --text-3: #8a867c;
+  --text-3: #a29e93;
   --accent: #d8a64a;
   --accent-ink: #1b1608;
   --live: #d0453b;
@@ -323,4 +323,23 @@ html.transparent .display-root {
   .stage-fade {
     animation: none;
   }
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 24px;
+}
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  color: var(--text-2);
+}
+details summary {
+  cursor: pointer;
+  min-height: 32px;
+}
+a.btn {
+  text-decoration: none;
 }

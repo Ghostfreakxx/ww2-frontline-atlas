@@ -111,7 +111,11 @@ function Timeline({ date, start, end, locked, onDate }: { date: ISODate; start: 
       onPointerDown={(e) => {
         if (locked) return;
         dragging.current = true;
-        (e.target as Element).setPointerCapture?.(e.pointerId);
+        try {
+          (e.target as Element).setPointerCapture?.(e.pointerId);
+        } catch {
+          /* ignore */
+        }
         onDate(fromX(e.clientX), false);
       }}
       onPointerMove={(e) => dragging.current && onDate(fromX(e.clientX), false)}

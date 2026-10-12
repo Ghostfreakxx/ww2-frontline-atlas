@@ -21,6 +21,8 @@ import { EditorPanel } from './EditorPanel';
 import { SharePanel } from './SharePanel';
 import { Icon } from './icons';
 
+const COLOR_NAMES = ['Red', 'Navy', 'Ochre', 'Green', 'Black', 'White'];
+
 type Tab = 'scene' | 'forces' | 'battles' | 'layers' | 'sources' | 'edit';
 const TABS: { id: Tab; label: string; icon: keyof typeof Icon }[] = [
   { id: 'scene', label: 'Scene', icon: 'film' },
@@ -252,10 +254,10 @@ export default function PresenterApp() {
               <button key={l} aria-pressed={state.layout === l} disabled={locked} onClick={() => commit((s) => ({ ...s, layout: l }))}>{l === 'split-right' ? 'Split' : l === 'full' ? 'Full' : 'Safe'}</button>
             ))}
           </div>
-          <button className={`btn ${state.hideUi ? 'on' : ''}`} onClick={() => commit((s) => ({ ...s, hideUi: !s.hideUi }))} title="Hide all audience panels (H)">
+          <button className={`btn ${state.hideUi ? 'on' : ''}`} onClick={() => commit((s) => ({ ...s, hideUi: !s.hideUi }))} title="Hide all audience panels (H)" aria-label={state.hideUi ? 'Panels hidden — show audience panels' : 'Hide UI — hide all audience panels'} aria-pressed={state.hideUi}>
             {state.hideUi ? <Icon.eyeOff /> : <Icon.eye />}<span className="hide-sm">{state.hideUi ? 'Panels hidden' : 'Hide UI'}</span>
           </button>
-          <button className={`btn ${preview ? 'on' : ''}`} onClick={() => setPreview((v) => !v)} title="Preview the audience output"><Icon.monitor /><span className="hide-sm">Preview</span></button>
+          <button className={`btn ${preview ? 'on' : ''}`} onClick={() => setPreview((v) => !v)} title="Preview the audience output" aria-label="Preview the audience output" aria-pressed={preview}><Icon.monitor /><span className="hide-sm">Preview</span></button>
           <button className="btn icon" onClick={() => setShowShare(true)} aria-label="Display link and QR code"><Icon.share /></button>
           <button className="btn icon" onClick={() => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.().catch(() => flash('Fullscreen: use Share → Add to Home Screen on iPad')))} aria-label="Fullscreen"><Icon.expand /></button>
           <button className={`btn lock-btn ${locked ? 'on' : ''} ${holding ? 'holding' : ''}`} {...lockProps} aria-label={locked ? 'Locked. Hold to unlock' : 'Lock presentation'}>
@@ -275,13 +277,13 @@ export default function PresenterApp() {
         })}
         <div className="tool-sep" />
         <div className="swatches" role="radiogroup" aria-label="Drawing colour">
-          {ANNOTATION_COLORS.map((c) => (
-            <button key={c} role="radio" aria-checked={color === c} className={`swatch-btn ${color === c ? 'on' : ''}`} style={{ background: c }} disabled={locked} onClick={() => setColor(c)} aria-label={`Colour ${c}`} />
+          {ANNOTATION_COLORS.map((c, i) => (
+            <button key={c} role="radio" aria-checked={color === c} className={`swatch-btn ${color === c ? 'on' : ''}`} style={{ background: c }} disabled={locked} onClick={() => setColor(c)} aria-label={`${COLOR_NAMES[i]} ink`} title={`${COLOR_NAMES[i]} ink`} />
           ))}
         </div>
         <div className="seg vertical" role="group" aria-label="Line width">
-          {[3, 5, 8].map((w) => (
-            <button key={w} aria-pressed={strokeWidth === w} disabled={locked} onClick={() => setStrokeWidth(w)}>
+          {([[3, 'Thin line'], [5, 'Medium line'], [8, 'Thick line']] as const).map(([w, label]) => (
+            <button key={w} aria-pressed={strokeWidth === w} disabled={locked} onClick={() => setStrokeWidth(w)} aria-label={label} title={label}>
               <span style={{ display: 'inline-block', width: 18, height: w, background: 'currentColor', borderRadius: 4 }} />
             </button>
           ))}
@@ -349,13 +351,9 @@ export default function PresenterApp() {
               episode={episode}
               state={state}
               locked={locked}
-              onLoadEpisode={(id) => {
-                const ep = library.get(id);
+              onLoadEpisode={(id, given) => {
+                const ep = given ?? library.get(id);
                 if (ep) commit((s) => sceneState({ ...s, sceneId: null }, ep, 0, 0, stream.serverNow()));
-                else setTimeout(() => {
-                  const later = library.get(id);
-                  if (later) commit((s) => sceneState({ ...s, sceneId: null }, later, 0, 0, stream.serverNow()));
-                }, 50);
               }}
               onGoto={goto}
               saveToServer={saveToServer}

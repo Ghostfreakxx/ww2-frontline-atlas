@@ -106,8 +106,10 @@ export interface HeldArea {
 export interface FrontlineSnapshot extends Cited {
   id: string;
   theatre: TheatreId;
-  /** The date the line represents. Shown until the next snapshot of the same theatre. */
+  /** The date the line represents. Shown until the next snapshot of the same theatre (at most STALE_LIMIT_DAYS). */
   date: ISODate;
+  /** Last date the line may be shown (e.g. an armistice, or the start of a mobile phase with no documented line). */
+  endsAt?: ISODate;
   label: string;
   description: string;
   uncertaintyKm: number;

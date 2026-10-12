@@ -76,11 +76,16 @@ export function AtlasMap(props: AtlasMapProps) {
   const territory = idx.territoryAt(date);
   const units = geo.territories.get(territory?.id ?? '');
   const fronts = layers.front ? idx.frontsAt(date) : [];
-  const front = fronts[0];
-  const frontShape = front ? geo.fronts.get(front.id) : undefined;
-  const prevSnap = front ? idx.previousFront(front.theatre, date) : undefined;
-  const prevShape = prevSnap ? geo.fronts.get(prevSnap.id) : undefined;
-  const uncertaintyWorld = front ? front.uncertaintyKm * unitsPerKm([32, 54]) : 0;
+  const frontItems = fronts.map((fl) => {
+    const prev = idx.previousFront(fl.theatre, date);
+    return {
+      fl,
+      shape: geo.fronts.get(fl.id),
+      prevShape: prev ? geo.fronts.get(prev.id) : undefined,
+      uncertaintyWorld: fl.uncertaintyKm * unitsPerKm(fl.theatre === 'east' ? [32, 54] : fl.theatre === 'italy' ? [12, 43] : [4, 49]),
+      stale: daysBetween(fl.date, date) > 2,
+    };
+  });
 
   const related = useMemo(() => relatedFormations(idx, focus.formations, date), [idx, focus.formations, date]);
   const focusing = focus.formations.length > 0 && focus.dimOthers;
@@ -108,7 +113,6 @@ export function AtlasMap(props: AtlasMapProps) {
     if (!layers.arrows) return [];
     let list = idx.arrowsAt(date, { operationId: null, windowDays: 60 });
     if (focus.arrowIds) list = list.filter((a) => focus.arrowIds!.includes(a.arrow.id));
-    if (!layers.opposing) list = list.filter((a) => a.arrow.side === 'axis' || (focus.formations.length > 0 && focusSides.has(a.arrow.side)) || a.arrow.side === 'allied');
     return list;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idx, date, layers.arrows, layers.opposing, focus.arrowIds, focus.formations]);
@@ -130,6 +134,32 @@ export function AtlasMap(props: AtlasMapProps) {
     const r = (focusBattle?.id === battle.id ? 17 : 12.5) * u;
     placed.push({ x: s[0] - r - 2, y: s[1] - r - 2, w: r * 2 + 4, h: r * 2 + 4 });
   }
+  // Battle labels are placed before cities so the selected battle always gets its label.
+  const battleLabels = new Map<string, ReactNode>();
+  for (const { battle } of battles) {
+    const sel = focusBattle?.id === battle.id;
+    if (!sel && zoom < 3) continue;
+    const s = toScreen(t, project(battle.at));
+    if (!inView(s[0], s[1])) continue;
+    const r = (sel ? 17 : 12.5) * u;
+    const f1 = (sel ? 17 : 13.5) * u, f2 = (sel ? 13.5 : 11.5) * u;
+    const w = Math.max(textWidth(battle.name, f1, FONT_SANS, 700), textWidth(formatRange(battle.start, battle.end), f2, FONT_SANS));
+    const opts: [number, number][] = [[r + 6 * u, -2 * u], [-r - 6 * u - w, -2 * u], [-w / 2, r + f1 + 2 * u], [-w / 2, -r - f2 - 8 * u]];
+    for (const [dx, dy] of opts) {
+      const b = { x: s[0] + dx, y: s[1] + dy - f1, w, h: f1 + f2 + 6 * u };
+      if (!sel && placed.some((q) => overlaps(q, b, 2 * u))) continue;
+      placed.push(b);
+      battleLabels.set(
+        battle.id,
+        <g fontFamily={FONT_SANS} stroke={PAPER} strokeWidth={3.4 * u} paintOrder="stroke" strokeLinejoin="round">
+          <text x={s[0] + dx} y={s[1] + dy} fontSize={f1} fontWeight={700} fill={INK}>{battle.name}</text>
+          <text x={s[0] + dx} y={s[1] + dy + f2 * 1.25} fontSize={f2} fill={INK_SOFT}>{formatRange(battle.start, battle.end)}</text>
+        </g>,
+      );
+      break;
+    }
+  }
+
   if (layers.cities) {
     const minRank = zoom >= 3.4 ? 3 : zoom >= 1.9 ? 2 : 1;
     const candidates = idx.pkg.places
@@ -278,11 +308,12 @@ export function AtlasMap(props: AtlasMapProps) {
     const f = arrow.formationId ? idx.formation(arrow.formationId) : undefined;
     const color = arrow.side === 'axis' ? formationColor(idx, f, date) ?? AXIS_ARROW : SIDE_COLOR[arrow.side] ?? AXIS_ARROW;
     const isRelated = !focusing || (arrow.formationId && related.has(arrow.formationId)) || (focusSides.size && !focusSides.has(arrow.side));
-    const opacity = (st === 'done' ? 0.5 : 0.92) * (isRelated ? 1 : 0.22);
+    // Completed stages are solid; a stage still under way is drawn hollow (its end point is not yet reached).
+    const opacity = (st === 'done' ? 0.62 : 0.92) * (isRelated ? 1 : 0.22);
     return { arrow, d, color, opacity, center, active: st === 'active', isRelated };
   });
 
-  const labelArrows = arrowEls.filter((a) => a.isRelated && (a.active || (focusing && a.arrow.formationId && related.has(a.arrow.formationId))) && a.center.length > 3);
+  const labelArrows = arrowEls.filter((a) => a.isRelated && a.active && a.center.length > 3);
   const arrowLabelEls: ReactNode[] = [];
   for (const a of labelArrows) {
     const mid = a.center[Math.floor(a.center.length * 0.45)];
@@ -323,19 +354,23 @@ export function AtlasMap(props: AtlasMapProps) {
       {background && <rect x={0} y={0} width={width} height={height} fill={SEA} />}
       <g transform={`translate(${t.tx} ${t.ty}) scale(${t.k})`}>
         <BaseLayer geo={geo} units={units} showTerritory={layers.territory} showRelief={layers.relief} showBorders={layers.borders} showRivers={layers.rivers} u={u} prefix={P} />
-        <HeldLayer front={frontShape} prefix={P} show={layers.held} />
+        {frontItems.map((x) => (
+          <HeldLayer key={`held-${x.fl.id}`} front={x.shape} prefix={P} show={layers.held} />
+        ))}
         {sectorItems.map(({ f, ring, color, opposing }) => {
           const dim = focusing && !related.has(f.id) && !(opposing && !focusSides.has(f.side));
           const sel = focus.formations.includes(f.id);
           const d = linePath(ring.map((ll) => project(ll)) as Pt[]) + 'Z';
           return (
             <g key={`sec-${f.id}`} opacity={dim ? 0.25 : 1} clipPath={`url(#${P}-land)`}>
-              <path d={d} fill={color} fillOpacity={opposing ? 0.08 : sel ? 0.2 : 0.11} />
+              <path d={d} fill={color} fillOpacity={opposing ? 0.06 : sel ? 0.13 : 0.07} />
               <path d={d} fill="none" stroke={color} strokeWidth={(sel ? 2.4 : 1.5) * u} strokeDasharray={`${9 * u} ${5 * u}`} vectorEffect="non-scaling-stroke" strokeOpacity={0.85} />
             </g>
           );
         })}
-        <FrontLines front={frontShape} prev={prevShape} showPrev={layers.prevFront} showUncertainty={layers.uncertainty} uncertaintyWorld={uncertaintyWorld} u={u} />
+        {frontItems.map((x) => (
+          <FrontLines key={`front-${x.fl.id}`} front={x.shape} prev={x.prevShape} showPrev={layers.prevFront} showUncertainty={layers.uncertainty} uncertaintyWorld={x.uncertaintyWorld} u={u} stale={x.stale} />
+        ))}
       </g>
 
       {/* Screen-space overlay */}
@@ -375,12 +410,15 @@ export function AtlasMap(props: AtlasMapProps) {
         );
       })}
       <g>
-        {arrowEls.map((a) => (
-          <path key={a.arrow.id} d={a.d} fill={a.color} fillOpacity={a.opacity} stroke={a.arrow.side === 'soviet' ? '#5c1712' : '#1e2329'} strokeOpacity={a.opacity * 0.7} strokeWidth={0.9 * u} strokeLinejoin="round" />
-        ))}
+        {arrowEls.map((a) =>
+          a.active ? (
+            <path key={a.arrow.id} d={a.d} fill={a.color} fillOpacity={a.opacity * 0.28} stroke={a.color} strokeOpacity={a.opacity} strokeWidth={2 * u} strokeDasharray={`${7 * u} ${4 * u}`} strokeLinejoin="round" />
+          ) : (
+            <path key={a.arrow.id} d={a.d} fill={a.color} fillOpacity={a.opacity} stroke={a.arrow.side === 'soviet' ? '#5c1712' : '#1e2329'} strokeOpacity={a.opacity * 0.6} strokeWidth={0.9 * u} strokeLinejoin="round" />
+          ),
+        )}
       </g>
-      {frontShape &&
-        frontShape.pockets.map((pk) => {
+      {frontItems.flatMap((x) => x.shape?.pockets ?? []).map((pk) => {
           if (!pk.centroid) return null;
           const s = toScreen(t, pk.centroid);
           if (!inView(s[0], s[1], -10) || zoom < 2.2) return null;
@@ -406,12 +444,7 @@ export function AtlasMap(props: AtlasMapProps) {
               <line x1={s[0] + r * 0.18} y1={s[1] - r * 0.58} x2={s[0] + r * 0.58} y2={s[1] - r * 0.18} />
               <line x1={s[0] - r * 0.18} y1={s[1] - r * 0.58} x2={s[0] - r * 0.58} y2={s[1] - r * 0.18} />
             </g>
-            {(sel || zoom >= 3) && (
-              <g fontFamily={FONT_SANS} stroke={PAPER} strokeWidth={3.4 * u} paintOrder="stroke" strokeLinejoin="round">
-                <text x={s[0] + r + 6 * u} y={s[1] - 2 * u} fontSize={(sel ? 17 : 13.5) * u} fontWeight={700} fill={INK}>{battle.name}</text>
-                <text x={s[0] + r + 6 * u} y={s[1] + (sel ? 17 : 13) * u} fontSize={(sel ? 13.5 : 11.5) * u} fill={INK_SOFT}>{formatRange(battle.start, battle.end)}</text>
-              </g>
-            )}
+            {battleLabels.get(battle.id)}
           </g>
         );
       })}

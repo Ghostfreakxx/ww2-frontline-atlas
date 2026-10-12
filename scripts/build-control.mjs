@@ -2,6 +2,7 @@
 // Inputs:  raw Natural Earth 1:50m countries + 1:10m rivers (NE_RAW_DIR), src/data/conflicts/ww2-europe/*.ts
 // Outputs: public/geo/territory-<date>.json, public/geo/fronts.json
 import fs from 'node:fs';
+import { projectionConfig } from '../src/data/geo/projection.ts';
 import path from 'node:path';
 import pc from 'polygon-clipping';
 import { territorySnapshots, GERMAN_SOVIET_1939, RIGA_1921, BESSARABIA_BUKOVINA } from '../src/data/conflicts/ww2-europe/territory.ts';
@@ -19,7 +20,7 @@ function rewindForD3(mp) {
 
 const RAW = process.env.NE_RAW_DIR || path.resolve('.geo-raw');
 const OUT = path.resolve('public/geo');
-const cfg = JSON.parse(fs.readFileSync('src/data/geo/projection.json', 'utf8'));
+const cfg = projectionConfig;
 const [W, S, E, N] = cfg.dataBBox;
 const load = (f) => JSON.parse(fs.readFileSync(path.join(RAW, f), 'utf8'));
 const round = (v) => Math.round(v * 1000) / 1000;

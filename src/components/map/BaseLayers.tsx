@@ -79,8 +79,10 @@ export const FrontLines = memo(function FrontLines(props: {
   showUncertainty: boolean;
   uncertaintyWorld: number;
   u: number;
+  /** The snapshot is older than the date shown: draw it slightly faded. */
+  stale?: boolean;
 }) {
-  const { front, prev, showPrev, showUncertainty, uncertaintyWorld, u } = props;
+  const { front, prev, showPrev, showUncertainty, uncertaintyWorld, u, stale } = props;
   return (
     <g fill="none" strokeLinejoin="round" strokeLinecap="round">
       {showPrev && prev && prev.lines.map((l, i) => <path key={`p${i}`} d={l.d} stroke={FRONT_PREV} strokeWidth={1.6 * u} strokeDasharray={`${6 * u} ${5 * u}`} vectorEffect="non-scaling-stroke" opacity={0.75} />)}
@@ -88,7 +90,7 @@ export const FrontLines = memo(function FrontLines(props: {
         front.lines.filter((l) => l.q !== 'c').map((l, i) => <path key={`u${i}`} d={l.d} stroke={FRONT} strokeOpacity={0.13} strokeWidth={uncertaintyWorld * 2} />)}
       {front &&
         front.lines.map((l, i) => (
-          <g key={`f${i}`}>
+          <g key={`f${i}`} opacity={stale ? 0.7 : 1}>
             <path d={l.d} stroke="#fff" strokeOpacity={0.55} strokeWidth={(l.q === 'c' ? 3 : 5.2) * u} vectorEffect="non-scaling-stroke" />
             <path
               d={l.d}

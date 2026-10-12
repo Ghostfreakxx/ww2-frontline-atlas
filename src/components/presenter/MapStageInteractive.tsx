@@ -91,7 +91,11 @@ export function MapStageInteractive(props: Props) {
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (locked) return;
-    (e.target as Element).setPointerCapture?.(e.pointerId);
+    try {
+      (e.target as Element).setPointerCapture?.(e.pointerId);
+    } catch {
+      /* synthetic or already-released pointer */
+    }
     const p = local(e);
     pointers.current.set(e.pointerId, { ...p, type: e.pointerType });
     const drawTool: Tool = e.pointerType === 'pen' && tool === 'pan' ? 'freehand' : tool;

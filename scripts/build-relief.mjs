@@ -2,6 +2,7 @@
 // (Mapzen "terrarium" encoding; sources include SRTM, GMTED2010 and ETOPO1).
 // Output: public/geo/relief.jpg + public/geo/relief.json (world-coordinate placement).
 import fs from 'node:fs';
+import { projectionConfig } from '../src/data/geo/projection.ts';
 import path from 'node:path';
 import { PNG } from 'pngjs';
 import jpeg from 'jpeg-js';
@@ -9,7 +10,7 @@ import { makeProjection } from '../src/lib/map/makeProjection.mjs';
 
 const Z = Number(process.env.RELIEF_ZOOM || 6);
 const CACHE = process.env.TILE_CACHE || path.resolve('.geo-raw/terrarium');
-const cfg = JSON.parse(fs.readFileSync('src/data/geo/projection.json', 'utf8'));
+const cfg = projectionConfig;
 const projection = makeProjection(cfg);
 const [W, S, E, N] = cfg.dataBBox;
 fs.mkdirSync(CACHE, { recursive: true });

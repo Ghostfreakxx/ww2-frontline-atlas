@@ -2,6 +2,7 @@
 // Input: raw Natural Earth GeoJSON files (download with scripts/fetch-geo.sh).
 // Output: compact, clipped and simplified GeoJSON in public/geo/.
 import fs from 'node:fs';
+import { projectionConfig } from '../src/data/geo/projection.ts';
 import path from 'node:path';
 import polygonClipping from 'polygon-clipping';
 
@@ -17,7 +18,7 @@ function rewindForD3(mp) {
 
 const RAW = process.env.NE_RAW_DIR || path.resolve('.geo-raw');
 const OUT = path.resolve('public/geo');
-const proj = JSON.parse(fs.readFileSync('src/data/geo/projection.json', 'utf8'));
+const proj = projectionConfig;
 const [W, S, E, N] = proj.dataBBox;
 const load = (f) => JSON.parse(fs.readFileSync(path.join(RAW, f), 'utf8'));
 const round = (v) => Math.round(v * 1000) / 1000;

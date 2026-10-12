@@ -104,7 +104,7 @@ export interface PresentationState {
 
 export const DEFAULT_LAYERS: Layers = {
   relief: true, territory: true, borders: true, rivers: true, cities: true, physical: true, front: true, prevFront: false,
-  uncertainty: true, held: true, arrows: true, battles: true, objectives: false, sectors: true, opposing: true,
+  uncertainty: true, held: true, arrows: true, battles: true, objectives: false, sectors: true, opposing: false,
 };
 
 export const DEFAULT_PANELS: Panels = {
