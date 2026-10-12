@@ -86,6 +86,13 @@ describe('frontlines and timeline', () => {
     expect(a).not.toContain('a-typhoon-pzgr3');
   });
 
+  it('political snapshots follow their validity dates', () => {
+    expect(idx.territoryAt('1939-09-10').id).toBe('territory-1939-09-01');
+    expect(idx.territoryAt('1939-10-01').id).toBe('territory-1939-10-06');
+    expect(idx.territoryAt('1940-08-01').id).toBe('territory-1940-07-01');
+    expect(idx.territoryAt('1941-06-21').id).toBe('territory-1941-06-22');
+  });
+
   it('date helpers', () => {
     expect(addDays('1941-06-22', 10)).toBe('1941-07-02');
     expect(formatDate('1941-06-22')).toBe('22 June 1941');

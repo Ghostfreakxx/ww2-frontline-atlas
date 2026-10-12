@@ -340,7 +340,10 @@ export interface TerritoryUnit {
 
 export interface TerritorySnapshot extends Cited {
   id: string;
+  /** The date the reconstruction represents. */
   date: ISODate;
+  /** First date from which this snapshot is shown (defaults to `date`). */
+  validFrom?: ISODate;
   label: string;
   description: string;
   units: TerritoryUnit[];
@@ -366,5 +369,5 @@ export interface ConflictPackage {
   frontlines: FrontlineSnapshot[];
   formations: Formation[];
   people: Person[];
-  territorySnapshots: { id: string; date: ISODate; label: string; file: string }[];
+  territorySnapshots: { id: string; date: ISODate; validFrom: ISODate; label: string; file: string }[];
 }

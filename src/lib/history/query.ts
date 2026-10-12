@@ -184,7 +184,7 @@ export class ConflictIndex {
 
   territoryAt(date: ISODate) {
     let hit = this.pkg.territorySnapshots[0];
-    for (const t of this.pkg.territorySnapshots) if (t.date <= date) hit = t;
+    for (const t of this.pkg.territorySnapshots) if (t.validFrom <= date) hit = t;
     return hit;
   }
 

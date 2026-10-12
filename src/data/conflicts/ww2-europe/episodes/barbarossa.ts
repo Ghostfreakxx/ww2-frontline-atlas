@@ -1,0 +1,210 @@
+import type { Episode } from '../../../../lib/episodes/types.ts';
+
+const R = (...ids: string[]) => ids.map((id) => ({ id }));
+
+// Demonstration episode: Operation Barbarossa, June–December 1941.
+// Scene dates use documented stages; between them the map shows the latest sourced front line only.
+export const barbarossaEpisode: Episode = {
+  schema: 1,
+  id: 'barbarossa-1941',
+  title: 'Operation Barbarossa, 1941',
+  description: 'From the eve of the invasion to the Soviet counteroffensive before Moscow — eight scenes following Army Groups North, Centre and South.',
+  conflictId: 'ww2-europe',
+  createdAt: '2026-10-12T00:00:00.000Z',
+  updatedAt: '2026-10-12T00:00:00.000Z',
+  scenes: [
+    {
+      id: 's1-europe-before',
+      title: 'Europe before the invasion',
+      notes: [
+        'Open on the whole continent. By June 1941 Germany controlled or dominated most of continental Europe.',
+        'Step 1 shows the borders of 1 September 1939, step 2 returns to 21 June 1941: Poland partitioned; the Baltic states, Bessarabia and Northern Bukovina annexed by the USSR in 1940; France, the Low Countries, Denmark and Norway occupied; Yugoslavia and Greece overrun in April 1941.',
+        'Point out that the borders are a reconstruction from modern outlines plus the historical boundary lines — accurate to roughly 10–20 km.',
+        'Directive 21 (18 December 1940) ordered the "crushing of Soviet Russia in a quick campaign".',
+      ].join('\n\n'),
+      sources: R('weinberg', 'mazower-empire', 'dir21', 'atlas-reconstruction'),
+      base: {
+        date: '1941-06-21',
+        camera: { lon: 18.5, lat: 51.5, zoom: 1.0, ms: 1200 },
+        layout: 'full',
+        caption: { title: 'Europe, June 1941', subtitle: 'The eve of Operation Barbarossa' },
+        layers: { arrows: false, battles: false, sectors: false, held: true },
+        panels: { legend: true, event: false },
+      },
+      steps: [
+        { id: 's1-1939', label: 'Borders of 1 September 1939', patch: { date: '1939-09-01', caption: { title: 'Europe, September 1939', subtitle: 'Before the German invasion of Poland' } }, cue: 'Contrast with 1941.' },
+        { id: 's1-1941', label: 'Back to 21 June 1941', patch: { date: '1941-06-21', caption: { title: 'Europe, 21 June 1941', subtitle: 'Germany dominates the continent' }, focus: { cities: ['berlin', 'moscow', 'leningrad', 'kiev'] } } },
+      ],
+    },
+    {
+      id: 's2-june-22',
+      title: '22 June 1941',
+      notes: [
+        'About 03:15: three army groups attack along the whole frontier from the Baltic to the Carpathians; Romanian and German forces in Romania join from 2 July; Finland is at war from 25 June.',
+        'The red line is the frontier — the 1939 German–Soviet demarcation line and the borders of Hungary and Romania with the USSR.',
+        'Step 1: the approximate sectors of Army Groups North, Centre and South. Step 2: the Soviet fronts facing them — the Northwestern, Western and Southwestern Fronts were formed from the border military districts on 22 June.',
+        'Step 3: the objectives set by Directive 21 — Leningrad, the destruction of Soviet forces in Belorussia and Ukraine, Kiev and the Dnieper; final line Archangel–Volga. These are PLANNED objectives, shown as hollow targets.',
+      ].join('\n\n'),
+      sources: R('dir21', 'gsww-4', 'glantz-barbarossa', 'glantz-house'),
+      base: {
+        date: '1941-06-22',
+        camera: { lon: 27.5, lat: 54.0, zoom: 1.55, ms: 2200 },
+        layout: 'split-right',
+        caption: { title: 'Operation Barbarossa', subtitle: 'Three army groups attack along the whole frontier' },
+        layers: { arrows: false, sectors: false, opposing: false },
+      },
+      steps: [
+        { id: 's2-sectors', label: 'Army group sectors', patch: { layers: { sectors: true }, focus: { formations: [], dimOthers: false } } },
+        { id: 's2-soviet', label: 'Soviet fronts opposite', patch: { layers: { sectors: true, opposing: true } } },
+        { id: 's2-objectives', label: 'Directive 21 objectives', patch: { layers: { objectives: true, opposing: false }, camera: { lon: 33.0, lat: 55.0, zoom: 1.15, ms: 2000 } } },
+      ],
+    },
+    {
+      id: 's3-agn',
+      title: 'Army Group North',
+      notes: [
+        'Field Marshal Wilhelm Ritter von Leeb — formerly commander of Army Group C in the West. 16th and 18th Armies, Panzer Group 4 (Hoepner).',
+        'Objective: the Baltic states and Leningrad (Directive 21).',
+        'Step 1: Manstein’s LVI Motorised Corps takes the Dvina bridges at Daugavpils intact on 26 June. Step 2: Ostrov (4 July) and Pskov (9 July). Step 3: play to 8 September — Shlisselburg falls and Leningrad is blockaded.',
+        'Opposite: the Northwestern Front (F. I. Kuznetsov).',
+      ].join('\n\n'),
+      sources: R('glantz-leningrad', 'kirchubel-1941', 'manstein-lost', 'gsww-4'),
+      base: {
+        date: '1941-06-22',
+        camera: { lon: 26.8, lat: 57.2, zoom: 2.7, ms: 2200 },
+        layout: 'split-right',
+        focus: { formations: ['de-hg-north'], dimOthers: true, operationId: 'baltic-1941' },
+        panels: { commander: true, portrait: true },
+        caption: { title: 'Army Group North', subtitle: 'Toward Leningrad' },
+      },
+      steps: [
+        { id: 's3-dvinsk', label: 'Daugavpils, 26 June', patch: { date: '1941-06-26', focus: { cities: ['daugavpils'] } } },
+        { id: 's3-pskov', label: 'Ostrov and Pskov, 9 July', patch: { date: '1941-07-09', camera: { lon: 27.8, lat: 57.8, zoom: 2.8, ms: 1600 }, focus: { cities: ['pskov', 'ostrov'] } } },
+        { id: 's3-oob', label: 'Order of battle', patch: { panels: { hierarchy: true, commander: false }, hierarchy: { rootId: 'de-hg-north', expanded: ['de-hg-north', 'de-pzgr-4'] } } },
+        { id: 's3-leningrad', label: 'Play to the blockade, 8 Sep', patch: { panels: { hierarchy: false, commander: true }, playTo: { date: '1941-09-08', speed: 8 }, camera: { lon: 29.6, lat: 58.8, zoom: 3.4, ms: 2400 }, focus: { cities: ['leningrad', 'shlisselburg'] } } },
+      ],
+    },
+    {
+      id: 's4-agc',
+      title: 'Army Group Centre',
+      notes: [
+        'Field Marshal Fedor von Bock — the strongest army group: 4th and 9th Armies, Panzer Groups 2 (Guderian) and 3 (Hoth).',
+        'Step 1: the two panzer groups meet at Minsk on 28 June; the 4th and 9th Armies close the inner ring at Białystok. German reports claimed about 324,000 prisoners by 9 July.',
+        'Step 2: Smolensk, 16 July — but two months of Soviet counterattacks follow (Yelnya retaken 6 September).',
+        'Step 3: on 21 August Hitler orders Guderian south toward Kiev; Army Group Centre goes over to the defensive until Typhoon.',
+        'Arrows are schematic: they show dated advance stages between documented places, not unit positions.',
+      ].join('\n\n'),
+      sources: R('stahel-barbarossa', 'glantz-house', 'gsww-4', 'guderian-panzer'),
+      base: {
+        date: '1941-06-22',
+        camera: { lon: 28.3, lat: 53.9, zoom: 2.5, ms: 2200 },
+        layout: 'split-right',
+        focus: { formations: ['de-hg-centre'], dimOthers: true },
+        panels: { commander: true },
+        caption: { title: 'Army Group Centre', subtitle: 'Minsk – Smolensk – Moscow' },
+      },
+      steps: [
+        { id: 's4-minsk', label: 'Minsk pocket closes, 28 June', patch: { date: '1941-06-28', focus: { battleId: 'b-bialystok-minsk', cities: ['minsk', 'bialystok'] } } },
+        { id: 's4-pocket', label: 'Pockets eliminated, 9 July', patch: { date: '1941-07-09', focus: { battleId: 'b-bialystok-minsk' } } },
+        { id: 's4-smolensk', label: 'Smolensk, 16 July', patch: { date: '1941-07-16', camera: { lon: 31.0, lat: 54.6, zoom: 3.3, ms: 2000 }, focus: { battleId: 'b-smolensk', cities: ['smolensk'] } } },
+        { id: 's4-turn', label: 'The turn south, 25 August', patch: { date: '1941-08-25', camera: { lon: 31.6, lat: 52.6, zoom: 2.4, ms: 2000 }, focus: { battleId: null, cities: ['roslavl', 'konotop'] }, panels: { hierarchy: true, commander: false }, hierarchy: { rootId: 'de-hg-centre', expanded: ['de-hg-centre'] } } },
+      ],
+    },
+    {
+      id: 's5-ags',
+      title: 'Army Group South',
+      notes: [
+        'Field Marshal Gerd von Rundstedt — 6th, 11th and 17th Armies, Panzer Group 1 (Kleist), with the Romanian 3rd and 4th Armies; Hungary entered the war on 27 June.',
+        'Step 1: Dubno–Brody (23–30 June): the Southwestern Front’s mechanised corps counterattack Panzer Group 1 — badly coordinated, but they slow the advance.',
+        'Step 2: Uman (pocket eliminated 8 August). Step 3: Panzer Groups 1 and 2 meet at Lokhvitsa on 16 September — the Kiev encirclement; Kirponos killed 20 September.',
+        'Step 4: Rostov taken 21 November and lost on 29 November — the first major German withdrawal; Rundstedt resigns on 1 December.',
+      ].join('\n\n'),
+      sources: R('stahel-kiev', 'glantz-house', 'kirchubel-1941', 'gsww-4'),
+      base: {
+        date: '1941-06-22',
+        camera: { lon: 28.5, lat: 49.6, zoom: 2.3, ms: 2200 },
+        layout: 'split-right',
+        focus: { formations: ['de-hg-south'], dimOthers: true },
+        panels: { commander: true },
+        caption: { title: 'Army Group South', subtitle: 'Ukraine, the Dnieper and the Donbas' },
+      },
+      steps: [
+        { id: 's5-dubno', label: 'Dubno–Brody, 23–30 June', patch: { date: '1941-06-27', camera: { lon: 25.8, lat: 50.4, zoom: 4.2, ms: 1800 }, focus: { battleId: 'b-dubno' }, layers: { opposing: true } } },
+        { id: 's5-uman', label: 'Uman, 8 August', patch: { date: '1941-08-08', camera: { lon: 29.6, lat: 49.3, zoom: 3.0, ms: 1800 }, focus: { battleId: 'b-uman' }, layers: { opposing: false } } },
+        { id: 's5-kiev', label: 'Kiev pocket, 16 September', patch: { date: '1941-09-16', camera: { lon: 31.6, lat: 50.4, zoom: 3.0, ms: 1800 }, focus: { battleId: 'b-kiev', formations: ['de-hg-south', 'de-hg-centre'], cities: ['kiev', 'lokhvitsa'] } } },
+        { id: 's5-rostov', label: 'Rostov, 29 November', patch: { date: '1941-11-29', camera: { lon: 36.5, lat: 47.9, zoom: 2.6, ms: 2000 }, focus: { battleId: 'b-rostov', formations: ['de-hg-south'], cities: ['rostov', 'kharkov'] } } },
+      ],
+    },
+    {
+      id: 's6-advances',
+      title: 'Major German advances',
+      notes: [
+        'Full-frame map. Play the timeline from 22 June to 5 December: the line jumps between the documented snapshots (9 July, 25 August, 30 September, 30 October, 5 December) — it does not invent positions in between.',
+        'The darker wash is Soviet territory under Axis military control; the political colours underneath are unchanged because the conquered areas were never legally transferred.',
+        'Step 2 compares Army Groups North and Centre side by side.',
+      ].join('\n\n'),
+      sources: R('glantz-house', 'esposito-wpa', 'blau-20-261a', 'atlas-reconstruction'),
+      base: {
+        date: '1941-06-22',
+        camera: { lon: 32.5, lat: 53.6, zoom: 1.45, ms: 2200 },
+        layout: 'full',
+        caption: { title: 'June – December 1941', subtitle: 'Documented stages of the advance' },
+        layers: { prevFront: true, sectors: false },
+        focus: { formations: [], dimOthers: false },
+      },
+      steps: [
+        { id: 's6-play', label: 'Play to 5 December', patch: { playTo: { date: '1941-12-05', speed: 12 } } },
+        { id: 's6-compare', label: 'Compare North and Centre', patch: { date: '1941-12-05', focus: { formations: ['de-hg-north', 'de-hg-centre'], dimOthers: true }, panels: { compare: true, legend: false }, layers: { sectors: true } } },
+      ],
+    },
+    {
+      id: 's7-moscow',
+      title: 'Battle of Moscow',
+      notes: [
+        'Operation Typhoon from 30 September/2 October: the Vyazma and Bryansk pockets (closed 7 October) shatter the Western, Reserve and Bryansk Fronts.',
+        'Autumn mud halts the first phase (late October); Zhukov takes over the Western Front on 10 October.',
+        'The second phase from 15–18 November brings the panzer groups to the Volga canal at Yakhroma and to Krasnaya Polyana, about 30 km from the Kremlin. Tula holds.',
+        'Step 4: the Soviet counteroffensive from 5–6 December. Bock is replaced by Kluge on 19 December; Hitler takes command of the army.',
+      ].join('\n\n'),
+      sources: R('stahel-typhoon', 'stahel-moscow', 'ziemke-bauer', 'glantz-house'),
+      base: {
+        date: '1941-09-30',
+        camera: { lon: 35.2, lat: 55.0, zoom: 3.1, ms: 2200 },
+        layout: 'split-right',
+        focus: { formations: ['de-hg-centre'], dimOthers: true, operationId: null },
+        panels: { commander: true },
+        caption: { title: 'The Battle of Moscow', subtitle: 'Operation Typhoon and the Soviet counteroffensive' },
+        layers: { opposing: true },
+      },
+      steps: [
+        { id: 's7-vyazma', label: 'Vyazma pocket, 7 October', patch: { date: '1941-10-07', focus: { battleId: 'b-vyazma-bryansk', cities: ['vyazma', 'bryansk'] } } },
+        { id: 's7-mud', label: 'The mud, 30 October', patch: { date: '1941-10-30', camera: { lon: 36.5, lat: 55.2, zoom: 3.8, ms: 1800 }, focus: { battleId: null, cities: ['kalinin', 'tula', 'mozhaisk'] } } },
+        { id: 's7-gates', label: 'At the gates, 5 December', patch: { date: '1941-12-05', camera: { lon: 37.2, lat: 55.7, zoom: 5.0, ms: 2000 }, focus: { battleId: 'b-moscow', cities: ['moscow', 'yakhroma', 'krasnaya-polyana', 'tula'] } } },
+        { id: 's7-counter', label: 'Counteroffensive to 7 January', patch: { playTo: { date: '1942-01-07', speed: 4 }, camera: { lon: 36.4, lat: 55.4, zoom: 3.6, ms: 2000 }, focus: { battleId: null, formations: ['de-hg-centre', 'su-western-front'] }, panels: { commander: true }, layers: { prevFront: true } } },
+      ],
+    },
+    {
+      id: 's8-summary',
+      title: 'Summary and consequences',
+      notes: [
+        'Compare the frontier of 22 June with the line of early January 1942 (previous line shown dashed).',
+        'Barbarossa destroyed much of the pre-war Red Army and occupied the Baltic states, Belorussia and most of Ukraine — but failed in its strategic aim of defeating the USSR in one campaign.',
+        'Consequences: Leningrad besieged; the German army’s losses were not replaced; Hitler took personal command of the army (19 December) and declared war on the United States (11 December). The war in the East became a long war of attrition.',
+        'Next episode hook: Case Blue and Stalingrad, 1942.',
+      ].join('\n\n'),
+      sources: R('stahel-barbarossa', 'stahel-moscow', 'glantz-house', 'weinberg', 'mawdsley-thunder'),
+      base: {
+        date: '1942-01-07',
+        camera: { lon: 31.5, lat: 54.0, zoom: 1.35, ms: 2400 },
+        layout: 'full',
+        caption: { title: 'Barbarossa: the balance', subtitle: '22 June 1941 – 7 January 1942' },
+        layers: { prevFront: true, arrows: false },
+        focus: { formations: [], dimOthers: false },
+      },
+      steps: [
+        { id: 's8-north-centre-south', label: 'Army group hierarchy (Centre)', patch: { panels: { hierarchy: true }, hierarchy: { rootId: 'de-hg-centre', expanded: ['de-hg-centre'] }, layout: 'split-right', camera: { lon: 33.0, lat: 54.5, zoom: 1.8, ms: 1800 } } },
+        { id: 's8-curtain', label: 'Fade out', patch: { curtain: true } },
+      ],
+    },
+  ],
+};

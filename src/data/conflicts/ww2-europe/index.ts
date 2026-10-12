@@ -26,7 +26,7 @@ export const ww2Europe: ConflictPackage = {
   frontlines,
   formations: [...germanArmyGroups, ...oob1941, ...sovietFronts, ...alliedArmyGroups],
   people: [...people, ...corpsCommanders, ...opposingPeople],
-  territorySnapshots: territorySnapshots.map((t) => ({ id: t.id, date: t.date, label: t.label, file: `/geo/territory-${t.date}.json` })),
+  territorySnapshots: territorySnapshots.map((t) => ({ id: t.id, date: t.date, validFrom: t.validFrom ?? t.date, label: t.label, file: `/geo/territory-${t.date}.json` })).sort((a, b) => a.validFrom.localeCompare(b.validFrom)),
 };
 
 export { territorySnapshots };

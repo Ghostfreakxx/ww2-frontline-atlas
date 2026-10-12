@@ -43,12 +43,17 @@ export const opposingPeople: Person[] = [
   P('eisenhower', 'Dwight D. Eisenhower', 'General of the Army'),
 ];
 
+// Approximate front zones on the outbreak of war (from the military districts' areas), for the opposing-forces layer.
+const SEC: SourceRef[] = [{ id: 'glantz-barbarossa' }, { id: 'glantz-house' }, { id: 'atlas-reconstruction' }];
+const zone = (from: string, to: string, ring: [number, number][]) => ({ from, to, label: 'Approximate front zone at the outbreak of war', ring, sources: SEC, confidence: 'approximate' as const, verification: 'reference-level' as const });
+
 export const sovietFronts: Formation[] = [
   {
     id: 'su-northern-front', side: 'soviet', nation: 'SU', echelon: 'front', color: '#a3473f', theatre: 'east',
     names: [{ from: '1941-06-24', to: '1941-08-23', name: 'Northern Front' }],
     existence: { from: '1941-06-24', to: '1941-08-23' },
     commanders: [t('m-popov', '1941-06-24', '1941-08-23')],
+    sectors: [zone('1941-06-24', '1941-07-10', [[27.8, 60.55], [28.4, 59.7], [30.6, 59.55], [33.5, 60.2], [35.5, 61.5], [36.0, 64.5], [34.5, 66.5], [33.5, 69.3], [31.0, 69.6], [29.6, 67.5], [30.2, 64.5], [31.3, 62.6], [29.3, 61.3]])],
     lineage: [
       { date: '1941-06-24', type: 'formed', text: 'Formed from the Leningrad Military District (7th, 14th and 23rd Armies).', sources: SU, confidence: 'documented' },
       { date: '1941-08-23', type: 'split', text: 'Split into the Leningrad and Karelian Fronts.', related: ['su-leningrad-front'], sources: SU, confidence: 'documented' },
@@ -70,6 +75,7 @@ export const sovietFronts: Formation[] = [
     existence: { from: '1941-06-22', to: '1943-11-20' },
     commanders: [t('f-kuznetsov', '1941-06-22', '1941-07-03'), t('sobennikov', '1941-07-04', '1941-08-23'), t('kurochkin', '1941-08-23', '1942-10-05')],
     subordinates: [{ id: 'su-8-army', from: '1941-06-22', snapshot: '1941-06-22' }, { id: 'su-11-army', from: '1941-06-22', snapshot: '1941-06-22' }, { id: 'su-27-army', from: '1941-06-22', snapshot: '1941-06-22' }],
+    sectors: [zone('1941-06-22', '1941-07-10', [[21.1, 55.9], [22.6, 54.45], [24.6, 54.85], [26.5, 55.6], [28.2, 56.1], [28.0, 57.6], [27.6, 58.9], [24.0, 59.45], [21.8, 58.8], [21.0, 57.4]])],
     lineage: [{ date: '1941-06-22', type: 'formed', text: 'Formed from the Baltic Special Military District on the outbreak of war.', sources: SU, confidence: 'documented' }],
     summary: 'Opposed Army Group North in the Baltic states, then held the Lake Ilmen – Demyansk sector.',
     sources: SU,
@@ -88,6 +94,7 @@ export const sovietFronts: Formation[] = [
       t('zhukov', '1941-10-10', '1942-08-26'),
     ],
     subordinates: [{ id: 'su-3-army', from: '1941-06-22', snapshot: '1941-06-22' }, { id: 'su-10-army', from: '1941-06-22', snapshot: '1941-06-22' }, { id: 'su-4-army', from: '1941-06-22', snapshot: '1941-06-22' }, { id: 'su-13-army', from: '1941-06-22', snapshot: '1941-06-22' }],
+    sectors: [zone('1941-06-22', '1941-07-10', [[22.6, 54.45], [24.6, 54.85], [26.5, 55.6], [28.2, 56.1], [30.8, 55.9], [31.4, 53.6], [30.8, 52.1], [28.5, 52.0], [26.2, 52.05], [24.6, 51.75], [23.9, 51.6], [23.4, 52.3], [22.4, 53.0], [22.7, 53.9]])],
     lineage: [{ date: '1941-06-22', type: 'formed', text: 'Formed from the Western Special Military District.', sources: SU, confidence: 'documented' }],
     summary: 'Destroyed in the Białystok–Minsk pockets (June–July 1941), rebuilt for Smolensk, encircled again at Vyazma (October 1941); under Zhukov it defended Moscow and led the December counteroffensive.',
     sources: [...SU, { id: 'stahel-typhoon' }],
@@ -122,6 +129,7 @@ export const sovietFronts: Formation[] = [
     existence: { from: '1941-06-22', to: '1943-10-20' },
     commanders: [t('kirponos', '1941-06-22', '1941-09-20', 'Killed during the break-out from the Kiev encirclement.'), t('timoshenko', '1941-09-30', '1941-12-18')],
     subordinates: [{ id: 'su-5-army', from: '1941-06-22', snapshot: '1941-06-22' }, { id: 'su-6-army', from: '1941-06-22', snapshot: '1941-06-22' }, { id: 'su-26-army', from: '1941-06-22', snapshot: '1941-06-22' }, { id: 'su-12-army', from: '1941-06-22', snapshot: '1941-06-22' }],
+    sectors: [zone('1941-06-22', '1941-07-10', [[23.9, 51.6], [24.6, 51.75], [26.2, 52.05], [28.5, 52.0], [30.8, 52.1], [31.4, 49.6], [28.4, 48.4], [26.6, 48.25], [24.7, 48.0], [22.8, 49.0], [22.8, 49.8], [23.9, 50.5]])],
     lineage: [{ date: '1941-06-22', type: 'formed', text: 'Formed from the Kiev Special Military District — the strongest Soviet grouping in June 1941.', sources: SU, confidence: 'documented' }],
     summary: 'Fought the armoured battles of Dubno–Brody; most of the front was destroyed in the Kiev encirclement (September 1941), the largest of the war.',
     sources: [...SU, { id: 'stahel-kiev' }],
@@ -132,6 +140,7 @@ export const sovietFronts: Formation[] = [
     existence: { from: '1941-06-25', to: '1943-10-20' },
     commanders: [t('tyulenev', '1941-06-25', '1941-08-30', 'Wounded.'), t('ryabyshev', '1941-08-30', '1941-10-05'), t('cherevichenko', '1941-10-05', '1941-12-24')],
     subordinates: [{ id: 'su-9-army', from: '1941-06-25', snapshot: '1941-06-25' }, { id: 'su-18-army', from: '1941-06-25', snapshot: '1941-06-25' }],
+    sectors: [zone('1941-06-25', '1941-07-10', [[26.6, 48.25], [28.4, 48.4], [31.4, 49.6], [32.2, 46.6], [30.0, 45.4], [28.2, 45.45], [28.1, 47.1], [26.8, 48.1]])],
     summary: 'Defended Bessarabia and southern Ukraine; retook Rostov on 29 November 1941.',
     sources: SU,
   },
