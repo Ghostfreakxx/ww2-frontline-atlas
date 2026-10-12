@@ -895,6 +895,13 @@
   gap: 8px;
   align-items: center;
 }
+.link-copy input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 12px;
+  font-size: 16px; /* 16px stops iOS Safari zooming into the field */
+}
 .link-copy code {
   flex: 1;
   min-width: 0;

@@ -1,12 +1,14 @@
 import type { Metadata, Viewport } from 'next';
 import './fonts.css';
 import './globals.css';
+import PwaRegister from './PwaRegister';
 
 export const metadata: Metadata = {
   title: 'Frontline Atlas — WWII podcast map',
   description: 'iPad-controlled historical war-map presentation system for history podcasts.',
   applicationName: 'Frontline Atlas',
-  appleWebApp: { capable: true, title: 'Frontline Atlas', statusBarStyle: 'black-translucent' },
+  appleWebApp: { capable: true, title: 'Atlas', statusBarStyle: 'black-translucent' },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
@@ -15,13 +17,16 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
-  themeColor: '#1c1d1f',
+  themeColor: '#161718',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <PwaRegister />
+      </body>
     </html>
   );
 }

@@ -24,9 +24,16 @@ Development: `npm run dev` (also binds to `0.0.0.0`).
 ### 1. Presenter on the iPad
 1. Put the computer and the iPad on the same Wi-Fi network.
 2. On the computer, open `http://localhost:3000` and click **New session**. A six-character code and a QR code appear.
-3. Scan the QR code with the iPad camera. It opens `/presenter` with the session's private presenter key. Tip: in Safari use **Share → Add to Home Screen** to get a true fullscreen app.
+3. Scan the QR code with the iPad camera. It opens `/presenter` with the session's private presenter key.
    *Alternatively*, open `http://<computer-ip>:3000/presenter` on the iPad; it creates a session itself and shows the code at top left.
 4. If macOS asks whether Node may accept incoming connections, allow it.
+
+### Install as an app (PWA)
+Frontline Atlas is an installable web app.
+- **iPad**: open the presenter in Safari → **Share → Add to Home Screen**. The **Atlas** icon opens the presenter full screen, without Safari's bars, and resumes your last session.
+  The home-screen app keeps its own storage, separate from Safari. On first launch it starts its own session (open `/display` on the computer and type the code shown at top left). To control a session created on the computer instead, open **share → Switch session** and paste the presenter link.
+- **Computer (Chrome/Edge)**: click the install icon in the address bar. The app's shortcuts include the audience display.
+- A service worker keeps the app, fonts and map geography on the device, so it starts fast and the map still loads with a weak or missing connection. Live sync always goes to the server and is never cached. The service worker needs HTTPS (e.g. Vercel) or `localhost`; over a plain `http://` LAN address the app still works, just without offline caching.
 
 ### 2. Audience display on the computer
 - Open `http://localhost:3000/display?code=ABC123`. The presenter's **share** button (top right) lists every variant with copy buttons and QR codes:
@@ -158,6 +165,7 @@ The end-to-end suite covers:
 - touch panning
 - presentation lock
 - scene autosave, export and import, and save to the computer
+- PWA: manifest and icons, service-worker caching, presenter opening offline, switching sessions
 - 1920×1080 PNG export
 - axe accessibility (no serious or critical issues)
 - display frame times during a camera flight

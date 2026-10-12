@@ -44,7 +44,11 @@ export function usePresenterSession() {
       let c = (url.searchParams.get('code') || '').toUpperCase();
       const hashToken = new URLSearchParams(url.hash.slice(1)).get('k');
       if (c && hashToken) writeLS(tokenKey(c), hashToken);
-      if (!c) {
+      // `?new` starts a fresh session instead of resuming the last one on this device.
+      const fresh = url.searchParams.has('new');
+      url.searchParams.delete('new');
+      url.searchParams.delete('join');
+      if (!c && !fresh) {
         const last = readLS(LS_LAST);
         if (last && SESSION_CODE_RE.test(last) && readLS(tokenKey(last))) c = last;
       }

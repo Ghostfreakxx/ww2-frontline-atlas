@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { copyText } from '@/lib/ui/platform';
+import { SESSION_CODE_RE } from '@/lib/sync/state';
 
 interface Props {
   code: string;
@@ -16,6 +17,8 @@ export function SharePanel({ code, token, listeners, onClose }: Props) {
   const [origin, setOrigin] = useState('');
   const [qr, setQr] = useState<{ display?: string; presenter?: string }>({});
   const [showKey, setShowKey] = useState(false);
+  const [joinLink, setJoinLink] = useState('');
+  const [joinError, setJoinError] = useState<string | null>(null);
 
   useEffect(() => {
     const here = window.location.origin;
@@ -41,6 +44,20 @@ export function SharePanel({ code, token, listeners, onClose }: Props) {
   }, [origin, displayUrl, presenterUrl]);
 
   const copy = (t: string) => copyText(t);
+  // Join a session created elsewhere (e.g. the start page on the computer). Needed in the home-screen
+  // app on iPad, whose storage is separate from Safari's, so a link opened in Safari does not carry over.
+  const join = () => {
+    try {
+      const u = new URL(joinLink.trim(), window.location.origin);
+      const c = (u.searchParams.get('code') || '').toUpperCase();
+      const k = new URLSearchParams(u.hash.slice(1)).get('k');
+      if (!SESSION_CODE_RE.test(c) || !k) throw new Error();
+      // `join` forces a real navigation even when only the key in the hash differs.
+      window.location.assign(`/presenter?code=${c}&join=${Date.now()}#k=${encodeURIComponent(k)}`);
+    } catch {
+      setJoinError('Paste the full presenter link (it contains ?code=… and #k=…).');
+    }
+  };
   const variants: [string, string][] = [
     ['Audience display (follows presenter layout)', displayUrl],
     ['OBS browser source — clean', `${displayUrl}&clean=1`],
@@ -93,6 +110,16 @@ export function SharePanel({ code, token, listeners, onClose }: Props) {
               </div>
             </div>
           )}
+        </details>
+        <details>
+          <summary>Switch session</summary>
+          <p className="small">Join a session started on the computer by pasting its presenter link, or start a new session on this device.</p>
+          <div className="link-copy">
+            <input type="url" aria-label="Presenter link" placeholder="https://…/presenter?code=ABC123#k=…" value={joinLink} onChange={(e) => { setJoinLink(e.target.value); setJoinError(null); }} />
+            <button className="btn" onClick={join} disabled={!joinLink.trim()}>Join</button>
+          </div>
+          {joinError && <p className="small" role="alert">{joinError}</p>}
+          <p><a className="btn" href="/presenter?new=1">Start a new session</a></p>
         </details>
       </div>
     </div>
