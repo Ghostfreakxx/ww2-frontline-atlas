@@ -5,6 +5,7 @@ A presentation system for a history podcast. You hold an **iPad (presenter)**; a
 - `/presenter` — touch-first control surface for iPad Safari (portrait and landscape, Apple Pencil drawing)
 - `/display` — 1920 × 1080 audience output (split 60/40 with camera area, full-width, title-safe, transparent)
 - `/` — start page: create a session and scan the QR code with the iPad
+- `/editor` — Reels editor: cut recordings and clips into a vertical video with captions and music, export MP4
 - `/sources` — methodology, confidence labels, front-line anchors and the full source registry
 
 The first episode, **Operation Barbarossa 1941** (8 scenes), loads automatically. A second built-in episode, **The war in Europe 1939–1945**, covers twelve campaigns: Poland, France, the Battle of Britain, the Balkans, Barbarossa, Moscow, Stalingrad, Kursk, Normandy, Bagration, the Bulge and Berlin.
@@ -51,6 +52,22 @@ For a "slides with a round webcam" look:
 4. Record the display with **Record tab**, a screen recorder or an OBS *window* capture. **Screenshot** includes the webcam and the pen marks.
 
 The webcam and screen pen live only on that display computer and are not sent to the iPad. Drawings made on the iPad (which stay attached to places on the map) are separate.
+
+### Reels editor (`/editor`)
+A video editor for short vertical videos (Instagram Reels, TikTok, YouTube Shorts), built into the app. It works on a computer and on the iPad, and everything stays on that device (browser storage).
+1. **Import** videos, photos and music (button or drag and drop). Recordings made with **Record tab** on the audience display are added to the editor's library automatically on that computer.
+2. **Timeline**: clips play one after another. Drag a clip to reorder it, drag its edges to trim, **S** splits at the playhead, **⌫** deletes (later clips and text move up), **⌘Z** undoes. Photos show for 3 s; drag the edge to change that.
+3. **Framing**: each clip fills the 9:16 frame by default — drag the picture in the preview to choose what stays in shot (useful for 16:9 map recordings) and pinch to zoom, or choose **Fit** for blurred bars.
+4. **Text**: **+ Text** (or **T**) adds a caption at the playhead. Styles: bold outlined caption, white Reels box, serif title, subtitle, small label; colours, size and Pop/Fade/Rise animations. Drag text in the preview to move it, drag its ends on the timeline to time it. **Import .srt** adds subtitles from a transcription app.
+5. **Music**: add a song from the library; set volume and fades. It stops with a fade at the end of the video. Each clip has its own volume (or **Mute all clips**).
+6. **Transitions**: cut, dip to black or flash white into a clip.
+7. **Safe zones** shows where Instagram/TikTok buttons cover the video.
+8. **Export** makes a 1080 × 1920 MP4 (H.264 + AAC):
+   - Chrome / Edge: frame by frame with WebCodecs, faster than real time.
+   - Safari / iPad: recorded in real time (keep the tab visible). Then **Share / Save to Photos** to post from the phone or iPad.
+   - Other formats: 4:5, 1:1 and 16:9 from the format menu.
+
+Projects autosave; use the project menu to create, duplicate or delete them.
 
 ### Starting over
 **Start over** (circular-arrow button on the iPad) offers:
@@ -179,6 +196,7 @@ The end-to-end suite covers:
 - touch panning
 - presentation lock
 - scene autosave, export and import, and save to the computer
+- Reels editor: import, split, delete/undo, text drag, autosave across reload, MP4 export (frame-by-frame and real-time paths), iPad portrait layout
 - camera bubble layout with a live webcam (fake camera), screen pen draw/undo/clear, start over
 - PWA: manifest and icons, service-worker caching, presenter opening offline, switching sessions
 - 1920×1080 PNG export

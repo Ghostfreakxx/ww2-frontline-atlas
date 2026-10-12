@@ -177,13 +177,24 @@ function LiveDisplay(props: { code: string; transparent: boolean; clean: boolean
       return;
     }
     try {
-      const stop = await recordTab((blob) => downloadBlob(blob, `atlas-recording-${Date.now()}.webm`));
+      const stop = await recordTab(async (blob) => {
+        const name = `atlas-recording-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.webm`;
+        downloadBlob(blob, name);
+        // Also put it in the Reels editor's library on this computer.
+        try {
+          const { importMedia } = await import('@/lib/editor/store');
+          await importMedia(blob, name);
+          say('Recording saved — also in the Reels editor (/editor)', 4000);
+        } catch {
+          /* the download above still has it */
+        }
+      });
       setRecording(() => stop);
     } catch {
       setNotice('Recording was cancelled or is not supported in this browser');
       setTimeout(() => setNotice(null), 3000);
     }
-  }, [recording]);
+  }, [recording, say]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

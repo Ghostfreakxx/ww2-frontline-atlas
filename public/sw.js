@@ -3,12 +3,13 @@
 // - Next.js build assets (content-hashed): cache-first.
 // - Pages: network-first, falling back to the cached copy when the network is down.
 // - /api (session sync, live stream): never touched by the service worker.
-const VERSION = 'atlas-v1';
+const VERSION = 'atlas-v2';
 const SHELL = `${VERSION}-shell`;
 const ASSETS = `${VERSION}-assets`;
 const PRECACHE = [
   '/presenter',
   '/display',
+  '/editor',
   '/',
   '/manifest.webmanifest',
   '/icons/icon-192.png',

@@ -34,7 +34,7 @@ export default function Home() {
         </section>
       </div>
       <p style={{ marginTop: 28, color: 'var(--text-3)' }}>
-        Already have a session? <Link href="/presenter">Open the presenter</Link> · <Link href="/display">Open an audience display</Link>
+        Already have a session? <Link href="/presenter">Open the presenter</Link> · <Link href="/display">Open an audience display</Link> · <Link href="/editor">Reels editor</Link>
       </p>
     </main>
   );

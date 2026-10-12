@@ -25,6 +25,7 @@ export default function manifest(): MetadataRoute.Manifest {
     shortcuts: [
       { name: 'Presenter', url: '/presenter', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
       { name: 'Audience display', url: '/display', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
+      { name: 'Reels editor', url: '/editor', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
       { name: 'New session', url: '/', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
     ],
   };
