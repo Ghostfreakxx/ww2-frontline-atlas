@@ -36,11 +36,20 @@ export const closingRoutes1942: Record<string, ClosingRoute> = {
   'east-1944-08-31': { northHead: [[26.0, 80], [26.0, 59.85], [27.9, 59.55]], southTail: [[23.0, 47.6], [23.0, 30]] },
   'east-1945-01-12': { northHead: [[20.5, 80], [20.5, 55.75]], southTail: [[18.5, 44.5], [18.5, 30]] },
   'east-1945-04-16': { northHead: [[13.8, 80], [13.8, 54.0], [14.2, 53.75]], southTail: [[15.5, 45.5], [15.5, 30]] },
+  // Western Front: Allied-held ground lies west of the line; beachheads close through the Channel.
+  'west-1944-06-12': { ring: [[0.2, 49.6], [-1.5, 49.95], [-1.45, 49.6]] },
+  'west-1944-07-24': { ring: [[0.2, 49.6], [-1.9, 49.9], [-1.95, 49.25]] },
+  'west-1944-08-25': { northHead: [[0.2, 80], [0.2, 49.6]], southTail: [[5.72, 44.0], [5.72, 30]] },
+  'west-1944-09-15': { northHead: [[3.55, 80], [3.55, 51.6]], southTail: [[7.0, 30]] },
+  'west-1944-12-15': { northHead: [[4.1, 80], [4.1, 51.7]], southTail: [[7.55, 30]] },
+  'west-1944-12-25': { northHead: [[4.1, 80], [4.1, 51.7]], southTail: [[7.55, 30]] },
+  'west-1945-03-25': { northHead: [[5.9, 80], [5.9, 52.2]], southTail: [[7.55, 30]] },
+  'west-1945-04-18': { northHead: [[8.8, 80], [8.8, 53.5]], southTail: [[7.9, 30]] },
 };
 
 export const fronts1942to1945: FrontlineSnapshot[] = [
   {
-    id: 'east-1942-06-27', theatre: 'east', date: '1942-06-27', label: 'Eastern Front, eve of Case Blue (27 June 1942)',
+    id: 'east-1942-06-27', staleAfterDays: 10, theatre: 'east', date: '1942-06-27', label: 'Eastern Front, eve of Case Blue (27 June 1942)',
     description: 'After the winter battles: the Demyansk and Rzhev salients held by Army Group North and Centre; the Barvenkovo bulge eliminated (Second Kharkov, May 1942) and the Kerch peninsula retaken. Sevastopol was in its final days.',
     uncertaintyKm: 35, sources: EAST42, confidence: 'approximate', verification: 'reference-level', westSide: 'axis', eastSide: 'soviet',
     pockets: [oranienbaum, { id: 'sevastopol', label: 'Sevastopol (falls 4 July)', side: 'soviet', confidence: 'approximate', ring: [[33.35, 44.75], [33.65, 44.80], [33.88, 44.58], [33.62, 44.40], [33.35, 44.45]] }],
@@ -58,7 +67,7 @@ export const fronts1942to1945: FrontlineSnapshot[] = [
     }],
   },
   {
-    id: 'east-1942-11-18', theatre: 'east', date: '1942-11-18', label: 'Eastern Front, 18 November 1942 — eve of Uranus',
+    id: 'east-1942-11-18', staleAfterDays: 30, theatre: 'east', date: '1942-11-18', label: 'Eastern Front, 18 November 1942 — eve of Uranus',
     description: 'The furthest German advance. The 6th Army held most of Stalingrad; Army Group A stood on the Terek, in the western Caucasus and at Novorossiysk; the Don flank was held largely by Romanian, Italian and Hungarian armies. No continuous front existed in the Kalmyk steppe.',
     uncertaintyKm: 35, sources: [...EAST42, { id: 'glantz-stalingrad' }], confidence: 'approximate', verification: 'reference-level', westSide: 'axis', eastSide: 'soviet',
     pockets: [oranienbaum],
@@ -78,7 +87,7 @@ export const fronts1942to1945: FrontlineSnapshot[] = [
     }],
   },
   {
-    id: 'east-1943-07-04', theatre: 'east', date: '1943-07-04', label: 'Eastern Front, 4 July 1943 — eve of Kursk',
+    id: 'east-1943-07-04', staleAfterDays: 10, theatre: 'east', date: '1943-07-04', label: 'Eastern Front, 4 July 1943 — eve of Kursk',
     description: 'After Stalingrad and Manstein’s counterstroke. The Leningrad blockade had been broken (January 1943); the Demyansk and Rzhev salients were evacuated (February–March); the Kursk salient bulged west between the German-held Orel and Belgorod–Kharkov areas; the Kuban (Taman) bridgehead still held.',
     uncertaintyKm: 30, sources: [...EAST, { id: 'glantz-kursk' }], confidence: 'approximate', verification: 'reference-level', westSide: 'axis', eastSide: 'soviet',
     pockets: [oranienbaum],
@@ -121,7 +130,7 @@ export const fronts1942to1945: FrontlineSnapshot[] = [
     }],
   },
   {
-    id: 'east-1944-06-22', theatre: 'east', date: '1944-06-22', label: 'Eastern Front, 22 June 1944 — eve of Bagration',
+    id: 'east-1944-06-22', staleAfterDays: 4, theatre: 'east', date: '1944-06-22', label: 'Eastern Front, 22 June 1944 — eve of Bagration',
     description: 'Army Group Centre held the "Belorussian balcony" from Vitebsk to Bobruisk; Leningrad relieved and the front pushed back to Narva and the Panther Line; western Ukraine and the Crimea liberated; Soviet forces stood on the Romanian border north of Iași and on the Dniester.',
     uncertaintyKm: 30, sources: [...EAST, { id: 'zaloga-bagration' }, { id: 'gsww-8' }], confidence: 'approximate', verification: 'reference-level', westSide: 'axis', eastSide: 'soviet',
     extraHeld: [{ id: 'finnish-karelia', label: 'Finnish-held Soviet Karelia (Soviet offensive from 10 June)', side: 'axis', confidence: 'uncertain', ring: finnishHeld }],
@@ -149,7 +158,7 @@ export const fronts1942to1945: FrontlineSnapshot[] = [
     }],
   },
   {
-    id: 'east-1945-01-12', theatre: 'east', date: '1945-01-12', label: 'Eastern Front, 12 January 1945 — eve of Vistula–Oder',
+    id: 'east-1945-01-12', staleAfterDays: 3, theatre: 'east', date: '1945-01-12', label: 'Eastern Front, 12 January 1945 — eve of Vistula–Oder',
     description: 'Army Group Courland isolated in western Latvia; East Prussia invaded at Gumbinnen (October 1944); Soviet bridgeheads on the Narew and Vistula; Budapest encircled since 26 December; the front ran on through Slovakia and Hungary to Lake Balaton and Yugoslavia.',
     uncertaintyKm: 40, sources: EAST, confidence: 'approximate', verification: 'reference-level', westSide: 'axis', eastSide: 'soviet',
     extraHeld: [{ id: 'courland', label: 'Courland pocket (Army Group North)', side: 'axis', confidence: 'approximate', ring: courlandRing }],
@@ -167,7 +176,7 @@ export const fronts1942to1945: FrontlineSnapshot[] = [
     pockets: [],
   },
   {
-    id: 'east-1945-04-16', endsAt: '1945-05-09', theatre: 'east', date: '1945-04-16', label: 'Eastern Front, 16 April 1945 — Berlin operation begins',
+    id: 'east-1945-04-16', staleAfterDays: 14, endsAt: '1945-05-09', theatre: 'east', date: '1945-04-16', label: 'Eastern Front, 16 April 1945 — Berlin operation begins',
     description: 'Soviet fronts on the Oder and Neisse, about 60 km from Berlin; Königsberg (9 Apr) and Vienna (13 Apr) taken; Breslau besieged; Courland still held.',
     uncertaintyKm: 30, sources: [...EAST, { id: 'beevor-berlin' }], confidence: 'approximate', verification: 'reference-level', westSide: 'axis', eastSide: 'soviet',
     extraHeld: [{ id: 'courland', label: 'Courland pocket', side: 'axis', confidence: 'approximate', ring: courlandRing }],
@@ -230,7 +239,7 @@ export const fronts1942to1945: FrontlineSnapshot[] = [
     segments: [{ id: 'main', kind: 'main', points: [a(3.55, 51.4, 'Scheldt (German south bank pocket)'), a(4.45, 51.28, 'Antwerp'), b(5.0, 51.15, 'Albert Canal'), a(5.69, 50.85, 'Maastricht'), a(6.05, 50.78, 'Aachen (German)'), a(6.24, 50.55, 'Monschau'), b(6.35, 50.25, 'Schnee Eifel'), a(6.13, 50.0, 'Our'), b(6.4, 49.6), a(6.05, 49.2, 'west of Metz (German)'), a(6.05, 48.9, 'Pont-à-Mousson'), a(6.3, 48.69, 'Nancy'), b(6.5, 48.4), a(6.45, 48.1, 'Épinal sector'), a(6.86, 47.64, 'Belfort Gap (German)'), b(7.0, 47.45, 'Swiss border')] }],
   },
   {
-    id: 'west-1944-12-15', theatre: 'west', date: '1944-12-15', label: 'Western Front, 15 December 1944 — eve of the Bulge',
+    id: 'west-1944-12-15', staleAfterDays: 1, theatre: 'west', date: '1944-12-15', label: 'Western Front, 15 December 1944 — eve of the Bulge',
     description: 'The Allies held the Scheldt estuary, the Nijmegen salient and the Roer front; the Ardennes sector was thinly held. In Alsace the Allies were on the Rhine at Strasbourg but the Germans held the Colmar pocket.',
     uncertaintyKm: 12, sources: [...WEST44, { id: 'cole-ardennes' }], confidence: 'approximate', verification: 'reference-level', westSide: 'allied', eastSide: 'axis',
     segments: [{ id: 'main', kind: 'main', points: [a(4.1, 51.55, 'Scheldt'), b(4.6, 51.7, 'Moerdijk'), b(5.3, 51.75, 'Maas'), a(5.86, 51.84, 'Nijmegen salient'), b(6.0, 51.4, 'Maas'), a(6.12, 50.97, 'Geilenkirchen'), a(6.36, 50.9, 'Roer (Jülich German)'), a(6.37, 50.7, 'Hürtgen Forest'), a(6.24, 50.55, 'Monschau'), a(6.27, 50.38, 'Losheim Gap'), b(6.3, 50.25, 'St Vith sector'), a(6.13, 49.95, 'Our'), a(6.42, 49.8, 'Echternach'), b(6.6, 49.45), a(6.75, 49.32, 'Saarlautern bridgehead'), a(7.43, 49.05, 'Bitche'), a(7.75, 48.6, 'Strasbourg'), a(7.45, 48.26, 'Sélestat'), b(7.15, 47.9, 'Colmar pocket'), a(7.35, 47.78, 'Mulhouse'), b(7.55, 47.6)] }],

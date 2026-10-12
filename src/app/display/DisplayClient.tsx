@@ -10,6 +10,7 @@ import { DisplayStage } from '@/components/display/DisplayStage';
 import { useStageView } from '@/components/display/useStageView';
 import { downloadBlob, recordTab, stageToPngBlob } from '@/lib/export/png';
 import { formatDate } from '@/lib/history/query';
+import { toggleFullscreen } from '@/lib/ui/platform';
 
 export default function DisplayClient() {
   const params = useSearchParams();
@@ -125,7 +126,7 @@ function LiveDisplay(props: { code: string; transparent: boolean; clean: boolean
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 's' || e.key === 'S') screenshot();
-      if (e.key === 'f' || e.key === 'F') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.();
+      if (e.key === 'f' || e.key === 'F') toggleFullscreen();
       if (e.key === 'g' || e.key === 'G') setGuides(!guides);
     };
     window.addEventListener('keydown', onKey);
@@ -152,7 +153,7 @@ function LiveDisplay(props: { code: string; transparent: boolean; clean: boolean
           <span style={{ alignSelf: 'center', color: 'var(--text-2)', padding: '0 8px', fontSize: 14 }}>
             {code} · {formatDate(view.date, 'short')} · {LAYOUTS[effective.layout].label}
           </span>
-          <button className="btn" onClick={() => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())}>Fullscreen</button>
+          <button className="btn" onClick={() => toggleFullscreen()}>Fullscreen</button>
           <button className="btn" onClick={screenshot}>Screenshot</button>
           <button className={`btn ${recording ? 'on' : ''}`} onClick={toggleRecord}>{recording ? 'Stop recording' : 'Record tab'}</button>
           <button className={`btn ${guides ? 'on' : ''}`} onClick={() => setGuides(!guides)}>Guides</button>

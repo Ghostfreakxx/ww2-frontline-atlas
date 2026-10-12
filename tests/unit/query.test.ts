@@ -99,3 +99,46 @@ describe('frontlines and timeline', () => {
     expect(formatRange('1941-06-22', '1941-07-09')).toBe('22 Jun – 9 Jul 1941');
   });
 });
+
+describe('episodes', async () => {
+  const { builtInEpisodes } = await import('../../src/lib/conflict.ts');
+  const { validateEpisode } = await import('../../src/lib/episodes/validate.ts');
+  const { sceneState, stepPosition } = await import('../../src/lib/episodes/apply.ts');
+  const { initialState } = await import('../../src/lib/sync/state.ts');
+
+  it('built-in episodes validate and reference existing data', () => {
+    for (const ep of builtInEpisodes) {
+      expect(() => validateEpisode(ep)).not.toThrow();
+      for (const sc of ep.scenes) {
+        for (const r of sc.sources) expect(pkg.sources.some((s) => s.id === r.id), `${sc.id} ${r.id}`).toBe(true);
+        const patches = [sc.base, ...sc.steps.map((s) => s.patch)];
+        for (const p of patches) {
+          for (const f of p.focus?.formations ?? []) expect(idx.formation(f), `${sc.id} ${f}`).toBeDefined();
+          if (p.focus?.battleId) expect(pkg.battles.some((b) => b.id === p.focus!.battleId), `${sc.id} ${p.focus.battleId}`).toBe(true);
+          for (const c of p.focus?.cities ?? []) expect(pkg.places.some((pl) => pl.id === c), `${sc.id} ${c}`).toBe(true);
+          if (p.hierarchy?.rootId) expect(idx.formation(p.hierarchy.rootId)).toBeDefined();
+        }
+      }
+    }
+  });
+
+  it('stepping forward through an episode and back again is consistent', () => {
+    const ep = builtInEpisodes[0];
+    let s = sceneState(initialState(), ep, 0, 0, 0);
+    const visited: string[] = [];
+    let pos: { sceneIndex: number; stepIndex: number } | null = { sceneIndex: 0, stepIndex: 0 };
+    while (pos) {
+      s = sceneState(s, ep, pos.sceneIndex, pos.stepIndex, 0);
+      visited.push(`${s.sceneId}#${s.stepIndex}`);
+      pos = stepPosition(ep, s.sceneIndex, s.stepIndex, 1);
+    }
+    const total = ep.scenes.reduce((n, sc) => n + sc.steps.length + 1, 0);
+    expect(visited.length).toBe(total);
+    // Going back one step reproduces the state reached going forward.
+    const forward = sceneState(sceneState(initialState(), ep, 3, 0, 0), ep, 3, 2, 0);
+    const back = sceneState(sceneState(sceneState(initialState(), ep, 3, 0, 0), ep, 3, 3, 0), ep, 3, 2, 0);
+    expect(back.date).toBe(forward.date);
+    expect(back.focus).toEqual(forward.focus);
+    expect(back.camera.lon).toBeCloseTo(forward.camera.lon);
+  });
+});

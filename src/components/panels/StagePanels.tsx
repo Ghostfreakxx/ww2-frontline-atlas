@@ -271,13 +271,14 @@ export function ComparePanel({ x, y, w, idx, ids, date, scale }: { x: number; y:
   );
 }
 
-export function Legend({ x, y, state, statuses, scale, hasFront, frontUnc }: { x: number; y: number; state: PresentationState; statuses: string[]; scale: number; hasFront: boolean; frontUnc: number | null }) {
+export function Legend({ x, y, state, statuses, scale, hasFront, frontUnc, alliedHeld = false, axisHeld = true }: { x: number; y: number; state: PresentationState; statuses: string[]; scale: number; hasFront: boolean; frontUnc: number | null; alliedHeld?: boolean; axisHeld?: boolean }) {
   const s = scale;
   const items: { key: string; label: string; swatch: ReactNode }[] = [];
   const sw = (key: string, el: ReactNode, label: string) => items.push({ key, label, swatch: el });
   if (hasFront && state.layers.front) sw('front', <g><rect x={0} y={-3 * s} width={34 * s} height={7 * s} fill={FRONT} opacity={0.15} /><line x1={0} y1={0} x2={34 * s} y2={0} stroke={FRONT} strokeWidth={3.2 * s} /></g>, frontUnc ? `Front line (reconstruction, ±${frontUnc} km)` : 'Front line');
   if (hasFront && state.layers.prevFront) sw('prev', <line x1={0} y1={0} x2={34 * s} y2={0} stroke={FRONT_PREV} strokeWidth={1.8 * s} strokeDasharray={`${6 * s} ${4 * s}`} />, 'Previous front line');
-  if (hasFront && state.layers.held) sw('held', <rect x={0} y={-8 * s} width={34 * s} height={16 * s} fill={HELD} fillOpacity={0.3} stroke={HELD} strokeOpacity={0.4} />, 'Axis military control');
+  if (hasFront && state.layers.held && axisHeld) sw('held', <rect x={0} y={-8 * s} width={34 * s} height={16 * s} fill={HELD} fillOpacity={0.3} stroke={HELD} strokeOpacity={0.4} />, 'Axis military control');
+  if (hasFront && state.layers.held && alliedHeld) sw('aheld', <rect x={0} y={-8 * s} width={34 * s} height={16 * s} fill="#3f6e9a" fillOpacity={0.3} stroke="#3f6e9a" strokeOpacity={0.4} />, 'Allied-held (liberated) ground');
   if (state.layers.arrows) sw('arrow', <path d={`M0,${-3 * s}L${22 * s},${-4 * s}L${22 * s},${-9 * s}L${34 * s},0L${22 * s},${9 * s}L${22 * s},${4 * s}L0,${3 * s}Z`} fill={AXIS_ARROW} fillOpacity={0.85} />, 'Campaign arrow (schematic)');
   if (state.layers.arrows && state.layers.opposing) sw('sarrow', <path d={`M0,${-3 * s}L${22 * s},${-4 * s}L${22 * s},${-9 * s}L${34 * s},0L${22 * s},${9 * s}L${22 * s},${4 * s}L0,${3 * s}Z`} fill={SOVIET_RED} fillOpacity={0.85} />, 'Soviet counter-move (schematic)');
   if (state.layers.objectives) sw('obj', <circle cx={17 * s} cy={0} r={8 * s} fill="none" stroke="#6a4c93" strokeWidth={2 * s} strokeDasharray={`${3 * s} ${2 * s}`} />, 'Planned objective');

@@ -49,8 +49,9 @@ export function sceneState(prev: PresentationState, episode: Episode, sceneIndex
   if (stepIndex < prev.stepIndex && !enteringScene) {
     // Going backwards inside a scene: rebuild from the base.
     s = sceneState({ ...prev, sceneId: null }, episode, sceneIndex, 0, serverNow);
-    for (let i = 0; i < stepIndex; i++) s = applyPatch(s, scene.steps[i].patch, serverNow);
+    for (let i = 0; i < stepIndex; i++) s = applyPatch(s, { ...scene.steps[i].patch, playTo: undefined, date: scene.steps[i].patch.playTo?.date ?? scene.steps[i].patch.date }, serverNow);
     s.stepIndex = stepIndex;
+    s.transition = prev.transition; // no scene fade when stepping back inside a scene
     s.playback = { ...s.playback, playing: false };
     return s;
   }

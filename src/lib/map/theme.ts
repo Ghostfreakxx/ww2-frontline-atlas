@@ -13,6 +13,7 @@ export const LAKE = '#c4d5de';
 export const FRONT = '#a4161a';
 export const FRONT_PREV = '#6b6b6b';
 export const HELD = '#56606e';
+export const ALLIED_HELD = '#3f6e9a';
 export const SOVIET_RED = '#a3322b';
 export const ALLIED_BLUE = '#2f5d8a';
 export const AXIS_ARROW = '#3a4350';

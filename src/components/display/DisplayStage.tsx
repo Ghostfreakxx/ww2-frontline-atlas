@@ -109,7 +109,7 @@ export const DisplayStage = forwardRef<SVGSVGElement, DisplayStageProps>(functio
           )}
           {compareOn && <ComparePanel x={panelRegion.x + 40} y={topY} w={Math.min(panelRegion.w - 80, 1100)} idx={idx} ids={state.focus.formations} date={date} scale={scale} />}
           {state.panels.legend && !hierarchyOn && (
-            <Legend x={panelRegion.x + panelRegion.w - 40} y={panelRegion.y + panelRegion.h - sourceH - 24} state={state} statuses={statuses} scale={scale} hasFront={!!front} frontUnc={front?.uncertaintyKm ?? null} />
+            <Legend x={panelRegion.x + panelRegion.w - 40} y={panelRegion.y + panelRegion.h - sourceH - 24} state={state} statuses={statuses} scale={scale} hasFront={!!front} frontUnc={front?.uncertaintyKm ?? null} alliedHeld={idx.frontsAt(date).some((f) => geo.fronts.get(f.id)?.heldSide === 'allied')} axisHeld={idx.frontsAt(date).some((f) => geo.fronts.get(f.id)?.heldSide === 'axis')} />
           )}
           {state.panels.event && !compareOn && <EventCaption region={panelRegion} idx={idx} date={date} scale={scale} bottomOffset={sourceH} />}
           {sourceText && <SourceLine region={{ ...map, y: map.y, h: map.h - (safe ? 54 : 0) }} text={sourceText} scale={scale} />}

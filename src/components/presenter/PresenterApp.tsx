@@ -20,6 +20,7 @@ import { BattlesPanel, LayersPanel, ScenePanel, SourcesPanel } from './SidePanel
 import { EditorPanel } from './EditorPanel';
 import { SharePanel } from './SharePanel';
 import { Icon } from './icons';
+import { toggleFullscreen } from '@/lib/ui/platform';
 
 const COLOR_NAMES = ['Red', 'Navy', 'Ochre', 'Green', 'Black', 'White'];
 
@@ -230,7 +231,7 @@ export default function PresenterApp() {
       <main className="page" style={{ maxWidth: 640, paddingTop: '14vh' }}>
         <h1>Presenter</h1>
         <p className="lede">{session.bootError}</p>
-        <button className="btn primary big" onClick={() => { window.location.href = '/presenter?new=1'; localStorage.removeItem('atlas.lastSession'); }}>Start a new session</button>
+        <button className="btn primary big" onClick={() => { try { localStorage.removeItem('atlas.lastSession'); } catch { /* storage blocked */ } window.location.href = '/presenter?new=1'; }}>Start a new session</button>
       </main>
     );
   }
@@ -259,7 +260,7 @@ export default function PresenterApp() {
           </button>
           <button className={`btn ${preview ? 'on' : ''}`} onClick={() => setPreview((v) => !v)} title="Preview the audience output" aria-label="Preview the audience output" aria-pressed={preview}><Icon.monitor /><span className="hide-sm">Preview</span></button>
           <button className="btn icon" onClick={() => setShowShare(true)} aria-label="Display link and QR code"><Icon.share /></button>
-          <button className="btn icon" onClick={() => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.().catch(() => flash('Fullscreen: use Share → Add to Home Screen on iPad')))} aria-label="Fullscreen"><Icon.expand /></button>
+          <button className="btn icon" onClick={async () => { if (!(await toggleFullscreen())) flash('For fullscreen on iPad use Share → Add to Home Screen'); }} aria-label="Fullscreen"><Icon.expand /></button>
           <button className={`btn lock-btn ${locked ? 'on' : ''} ${holding ? 'holding' : ''}`} {...lockProps} aria-label={locked ? 'Locked. Hold to unlock' : 'Lock presentation'}>
             {locked ? <Icon.lock /> : <Icon.unlock />}<span className="hide-sm">{locked ? 'Hold to unlock' : 'Lock'}</span>
           </button>

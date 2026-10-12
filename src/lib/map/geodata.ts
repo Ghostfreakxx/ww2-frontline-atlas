@@ -29,6 +29,8 @@ export interface FrontShape {
   date: string;
   lines: { segment: string; kind: string; label: string | null; q: 'a' | 'b' | 'c'; d: string; coordinates: LonLat[] }[];
   heldD: string | null;
+  /** Which side holds the `heldD` area (Axis-held Soviet territory, or Allied-held ground in the West). */
+  heldSide: 'axis' | 'allied' | null;
   pockets: { id: string; label: string; side: string; d: string; centroid: [number, number] | null }[];
 }
 
@@ -36,7 +38,7 @@ export interface GeoData {
   landD: string;
   lakesD: string;
   rivers: { d: string; rank: number; name: string | null }[];
-  relief: { x: number; y: number; width: number; height: number };
+  relief: { x: number; y: number; width: number; height: number; file?: string; small?: string; smallPixelWidth?: number };
   territories: Map<string, TerritoryUnitShape[]>;
   fronts: Map<string, FrontShape>;
 }
@@ -57,8 +59,8 @@ export function loadGeo(territoryFiles: { id: string; file: string }[]): Promise
       getJSON<FC>('/geo/land.json'),
       getJSON<FC>('/geo/lakes.json'),
       getJSON<FC<{ name: string | null; rank: number }>>('/geo/rivers.json'),
-      getJSON<{ x: number; y: number; width: number; height: number }>('/geo/relief.json'),
-      getJSON<{ fronts: { id: string; theatre: string; date: string; lines: { segment: string; kind: string; label: string | null; q: 'a' | 'b' | 'c'; coordinates: LonLat[] }[]; held: unknown; pockets: { id: string; label: string; side: string; geometry: unknown }[] }[] }>('/geo/fronts.json'),
+      getJSON<{ x: number; y: number; width: number; height: number; file?: string; small?: string; smallPixelWidth?: number }>('/geo/relief.json'),
+      getJSON<{ fronts: { id: string; theatre: string; date: string; lines: { segment: string; kind: string; label: string | null; q: 'a' | 'b' | 'c'; coordinates: LonLat[] }[]; held: unknown; heldSide?: 'axis' | 'allied' | null; pockets: { id: string; label: string; side: string; geometry: unknown }[] }[] }>('/geo/fronts.json'),
       ...territoryFiles.map((t) => getJSON<FC<{ id: string; name: string; status: string; note: string | null; confidence: string; labelAt: LonLat | null }>>(t.file)),
     ]);
     const join = (fc: FC) => fc.features.map((f) => path(f as never) ?? '').join('');
@@ -85,6 +87,7 @@ export function loadGeo(territoryFiles: { id: string; file: string }[]): Promise
         date: f.date,
         lines: f.lines.map((l) => ({ ...l, d: path({ type: 'LineString', coordinates: l.coordinates } as never) ?? '' })),
         heldD: f.held ? path({ type: 'MultiPolygon', coordinates: f.held } as never) : null,
+        heldSide: f.heldSide ?? (f.held ? 'axis' : null),
         pockets: f.pockets.map((p) => {
           const g = { type: 'MultiPolygon', coordinates: p.geometry } as never;
           const d = path(g) ?? '';

@@ -1,11 +1,10 @@
 // Builds a shaded-relief raster in the atlas projection from AWS Open Data terrain tiles
 // (Mapzen "terrarium" encoding; sources include SRTM, GMTED2010 and ETOPO1).
-// Output: public/geo/relief.jpg + public/geo/relief.json (world-coordinate placement).
+// Output: public/geo/relief.png (+ half-resolution relief-small.png) and relief.json (world-coordinate placement).
 import fs from 'node:fs';
 import { projectionConfig } from '../src/data/geo/projection.ts';
 import path from 'node:path';
 import { PNG } from 'pngjs';
-import jpeg from 'jpeg-js';
 import { makeProjection } from '../src/lib/map/makeProjection.mjs';
 
 const Z = Number(process.env.RELIEF_ZOOM || 6);
@@ -100,7 +99,11 @@ function tint(e) {
   }
   return tints[tints.length - 1][1];
 }
-const rgba = Buffer.alloc(OUT_W * OUT_H * 4);
+// Encode as a shading overlay: warm dark colour with alpha = how much the pixel darkens the map.
+// Drawn with normal compositing over the paper/territory colours — no blend mode or coastline clip needed
+// (flat land and sea have ~zero alpha), which keeps camera animation cheap.
+const SHADE_RGB = [70, 52, 34];
+const png = new PNG({ width: OUT_W, height: OUT_H });
 for (let j = 0; j < OUT_H; j++) for (let i = 0; i < OUT_W; i++) {
   const k = j * OUT_W + i;
   const kl = j * OUT_W + Math.max(0, i - 1), kr = j * OUT_W + Math.min(OUT_W - 1, i + 1);
@@ -114,12 +117,27 @@ for (let j = 0; j < OUT_H; j++) for (let i = 0; i < OUT_W; i++) {
     shade += w * Math.max(0, Math.cos(zen) * Math.cos(slope) + Math.sin(zen) * Math.sin(slope) * Math.cos(azr - aspect));
     flat += w * Math.cos(zen);
   }
-  const s = Math.min(1.0, shade / flat);
-  const f = 0.42 + 0.58 * s;
+  const sh = Math.min(1.0, shade / flat);
   const c = tint(grid[k]);
-  rgba[k * 4] = Math.round(c[0] * f); rgba[k * 4 + 1] = Math.round(c[1] * f); rgba[k * 4 + 2] = Math.round(c[2] * f); rgba[k * 4 + 3] = 255;
+  const f = ((c[0] + c[1] + c[2]) / 765) * (0.42 + 0.58 * sh);
+  const a = grid[k] <= 0 ? 0 : Math.max(0, Math.min(1, (1 - f) * 1.05));
+  png.data[k * 4] = SHADE_RGB[0];
+  png.data[k * 4 + 1] = SHADE_RGB[1];
+  png.data[k * 4 + 2] = SHADE_RGB[2];
+  png.data[k * 4 + 3] = Math.round(a * 255);
 }
-const out = jpeg.encode({ data: rgba, width: OUT_W, height: OUT_H }, 80);
-fs.writeFileSync('public/geo/relief.jpg', out.data);
-fs.writeFileSync('public/geo/relief.json', JSON.stringify({ x: minX, y: minY, width: maxX - minX, height: maxY - minY, pixelWidth: OUT_W, pixelHeight: OUT_H, source: 'terrain-tiles' }, null, 2));
-console.log('relief.jpg', (out.data.length / 1024).toFixed(0), 'KB');
+const buf = PNG.sync.write(png, { colorType: 6, deflateLevel: 9 });
+fs.writeFileSync('public/geo/relief.png', buf);
+// Half-resolution level for zoomed-out views (cheaper to resample while the camera moves).
+const SW = Math.floor(OUT_W / 2), SH = Math.floor(OUT_H / 2);
+const small = new PNG({ width: SW, height: SH });
+for (let j = 0; j < SH; j++) for (let i = 0; i < SW; i++) {
+  let a = 0;
+  for (const [di, dj] of [[0, 0], [1, 0], [0, 1], [1, 1]]) a += png.data[((2 * j + dj) * OUT_W + 2 * i + di) * 4 + 3];
+  const k = (j * SW + i) * 4;
+  small.data[k] = SHADE_RGB[0]; small.data[k + 1] = SHADE_RGB[1]; small.data[k + 2] = SHADE_RGB[2]; small.data[k + 3] = Math.round(a / 4);
+}
+const sbuf = PNG.sync.write(small, { colorType: 6, deflateLevel: 9 });
+fs.writeFileSync('public/geo/relief-small.png', sbuf);
+fs.writeFileSync('public/geo/relief.json', JSON.stringify({ x: minX, y: minY, width: maxX - minX, height: maxY - minY, pixelWidth: OUT_W, pixelHeight: OUT_H, source: 'terrain-tiles', file: '/geo/relief.png', small: '/geo/relief-small.png', smallPixelWidth: SW }, null, 2));
+console.log('relief.png', (buf.length / 1024).toFixed(0), 'KB; relief-small.png', (sbuf.length / 1024).toFixed(0), 'KB');

@@ -217,11 +217,15 @@ function sharedBoundary(home, others) {
 }
 
 const fronts = [];
+const homeCache = new Map();
 for (const fl of frontlines) {
-  const basis = frontTerritoryBasis[fl.theatre];
-  const home = basis ? unionWhere(basis.territory, (u) => basis.defenderStatus.includes(u.status)) : [];
-  const entry = { id: fl.id, theatre: fl.theatre, date: fl.date, lines: [], held: null, pockets: [] };
-  if (!fl.segments.length && basis) {
+  const basisAll = frontTerritoryBasis[fl.theatre];
+  const basis = basisAll && (!basisAll.from || fl.date >= basisAll.from) ? basisAll : null;
+  const homeKey = basis ? basis.territory + '|' + basis.defenderStatus.join(',') : null;
+  if (homeKey && !homeCache.has(homeKey)) homeCache.set(homeKey, unionWhere(basis.territory, (u) => basis.defenderStatus.includes(u.status)));
+  const home = homeKey ? homeCache.get(homeKey) : [];
+  const entry = { id: fl.id, theatre: fl.theatre, date: fl.date, lines: [], held: null, heldSide: basis ? basis.heldSide : null, pockets: [] };
+  if (!fl.segments.length && basis && basis.heldSide === 'axis') {
     // Derived frontier: boundary between the defender's territory and Axis-controlled territory.
     const axisFin = unionWhere(basis.territory, (u) => u.status === 'cobelligerent');
     const axisMain = unionWhere(basis.territory, (u) => AXIS_STATUSES.has(u.status) && u.status !== 'cobelligerent');
@@ -241,14 +245,14 @@ for (const fl of frontlines) {
         run.coordinates.push(q.at);
       }
     }
-    const main = fl.segments.find((s) => s.kind === 'main');
+    const route = closingRoutes[fl.id] || {};
+    const main = fl.segments.find((s) => s.kind === 'main') || (route.ring ? fl.segments[0] : undefined);
     if (main && home.length) {
-      const route = closingRoutes[fl.id] || {};
       const pts = main.points.map((p) => p.at);
       const first = pts[0], last = pts[pts.length - 1];
       const tail = route.southTail || [[last[0], 30]];
       const head = route.northHead || [[first[0], 80]];
-      const ring = [...pts, ...tail, [-30, 30], [-30, 80], ...head];
+      const ring = route.ring ? [...pts, ...route.ring] : [...pts, ...tail, [-30, 30], [-30, 80], ...head];
       let held = robust('intersection', home, ringPoly(ring), fl.id + ' held');
       for (const x of fl.extraHeld || []) held = robust('union', held, robust('intersection', home, ringPoly(x.ring), x.id), fl.id + ' extra');
       for (const pk of fl.pockets || []) held = robust('difference', held, ringPoly(pk.ring), fl.id + ' pocket');

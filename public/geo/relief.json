@@ -3,7 +3,10 @@
   "y": -295.53027576604904,
   "width": 2470.9519872126193,
   "height": 1498.1226466356477,
-  "pixelWidth": 4000,
-  "pixelHeight": 2425,
-  "source": "terrain-tiles"
+  "pixelWidth": 3200,
+  "pixelHeight": 1940,
+  "source": "terrain-tiles",
+  "file": "/geo/relief.png",
+  "small": "/geo/relief-small.png",
+  "smallPixelWidth": 1600
 }

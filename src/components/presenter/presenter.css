@@ -538,6 +538,10 @@
 .oob-name {
   font-weight: 500;
 }
+.oob-node > .muted {
+  margin-left: auto;
+  text-align: right;
+}
 
 /* battles */
 .battle-row {

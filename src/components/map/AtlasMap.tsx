@@ -347,13 +347,16 @@ export function AtlasMap(props: AtlasMapProps) {
         <pattern id={`${P}-hatch`} patternUnits="userSpaceOnUse" width={7 / t.k * u} height={7 / t.k * u} patternTransform="rotate(45)">
           <line x1={0} y1={0} x2={0} y2={7 / t.k * u} stroke="#4a5360" strokeWidth={1.1 / t.k * u} strokeOpacity={0.35} />
         </pattern>
+        <pattern id={`${P}-ahatch`} patternUnits="userSpaceOnUse" width={8 / t.k * u} height={8 / t.k * u} patternTransform="rotate(-45)">
+          <line x1={0} y1={0} x2={0} y2={8 / t.k * u} stroke="#2f5d8a" strokeWidth={1.1 / t.k * u} strokeOpacity={0.35} />
+        </pattern>
         <pattern id={`${P}-shatch`} patternUnits="userSpaceOnUse" width={9 / t.k * u} height={9 / t.k * u} patternTransform="rotate(-45)">
           <line x1={0} y1={0} x2={0} y2={9 / t.k * u} stroke="#000" strokeWidth={1 / t.k * u} strokeOpacity={0.25} />
         </pattern>
       </defs>
       {background && <rect x={0} y={0} width={width} height={height} fill={SEA} />}
       <g transform={`translate(${t.tx} ${t.ty}) scale(${t.k})`}>
-        <BaseLayer geo={geo} units={units} showTerritory={layers.territory} showRelief={layers.relief} showBorders={layers.borders} showRivers={layers.rivers} u={u} prefix={P} />
+        <BaseLayer geo={geo} units={units} showTerritory={layers.territory} showRelief={layers.relief} showBorders={layers.borders} showRivers={layers.rivers} u={u} prefix={P} smallRelief={geo.relief.width * t.k < (geo.relief.smallPixelWidth ?? 0) * 1.25} />
         {frontItems.map((x) => (
           <HeldLayer key={`held-${x.fl.id}`} front={x.shape} prefix={P} show={layers.held} />
         ))}

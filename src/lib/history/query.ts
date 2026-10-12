@@ -17,7 +17,7 @@ import type {
 
 const DAY = 86_400_000;
 /** A front snapshot older than this is not drawn (the line would mislead). */
-export const STALE_LIMIT_DAYS = 90;
+export const STALE_LIMIT_DAYS = 60;
 export const toTime = (d: ISODate) => Date.parse(d + 'T00:00:00Z');
 export const fromTime = (t: number): ISODate => new Date(t).toISOString().slice(0, 10);
 export const addDays = (d: ISODate, n: number): ISODate => fromTime(toTime(d) + Math.round(n) * DAY);
@@ -181,7 +181,7 @@ export class ConflictIndex {
       const f = this.frontAt(theatre, date);
       if (!f) continue;
       if (f.endsAt && date > f.endsAt) continue;
-      if (daysBetween(f.date, date) > STALE_LIMIT_DAYS) continue;
+      if (daysBetween(f.date, date) > (f.staleAfterDays ?? STALE_LIMIT_DAYS)) continue;
       out.push(f);
     }
     // Eastern Front first: it is the primary theatre of the atlas.

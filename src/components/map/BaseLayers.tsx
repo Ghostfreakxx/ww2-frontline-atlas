@@ -1,7 +1,7 @@
 'use client';
 import { memo } from 'react';
 import type { GeoData, FrontShape, TerritoryUnitShape } from '@/lib/map/geodata';
-import { BORDER, COAST, FRONT, FRONT_PREV, HELD, LAKE, PAPER, RIVER, STATUS_FILL } from '@/lib/map/theme';
+import { ALLIED_HELD, BORDER, COAST, FRONT, FRONT_PREV, HELD, LAKE, PAPER, RIVER, STATUS_FILL } from '@/lib/map/theme';
 
 // World-space layers. These are memoised and drawn inside a single transformed <g>, so panning and
 // zooming only changes one transform attribute instead of re-rendering thousands of paths.
@@ -15,8 +15,10 @@ export const BaseLayer = memo(function BaseLayer(props: {
   showRivers: boolean;
   u: number;
   prefix: string;
+  /** Use the half-resolution relief (zoomed-out views). */
+  smallRelief?: boolean;
 }) {
-  const { geo, units, showTerritory, showRelief, showBorders, showRivers, u, prefix } = props;
+  const { geo, units, showTerritory, showRelief, showBorders, showRivers, u, smallRelief } = props;
   const r = geo.relief;
   return (
     <g>
@@ -29,17 +31,8 @@ export const BaseLayer = memo(function BaseLayer(props: {
         </g>
       )}
       {showRelief && (
-        <image
-          href="/geo/relief.jpg"
-          x={r.x}
-          y={r.y}
-          width={r.width}
-          height={r.height}
-          preserveAspectRatio="none"
-          clipPath={`url(#${prefix}-land)`}
-          style={{ mixBlendMode: 'multiply' }}
-          opacity={0.92}
-        />
+        // Pre-baked shading overlay (alpha = darkening): no blend mode or clip, so it stays cheap to animate.
+        <image href={(smallRelief && r.small) || r.file || '/geo/relief.png'} x={r.x} y={r.y} width={r.width} height={r.height} preserveAspectRatio="none" opacity={0.95} />
       )}
       <path d={geo.lakesD} fill={LAKE} stroke={RIVER} strokeWidth={0.5 * u} vectorEffect="non-scaling-stroke" strokeOpacity={0.6} />
       {showRivers && (
@@ -64,10 +57,11 @@ export const BaseLayer = memo(function BaseLayer(props: {
 export const HeldLayer = memo(function HeldLayer(props: { front: FrontShape | undefined; prefix: string; show: boolean }) {
   const { front, prefix, show } = props;
   if (!front || !show || !front.heldD) return null;
+  const allied = front.heldSide === 'allied';
   return (
     <g>
-      <path d={front.heldD} fill={HELD} fillOpacity={0.16} />
-      <path d={front.heldD} fill={`url(#${prefix}-hatch)`} />
+      <path d={front.heldD} fill={allied ? ALLIED_HELD : HELD} fillOpacity={allied ? 0.2 : 0.16} />
+      <path d={front.heldD} fill={`url(#${prefix}-${allied ? 'ahatch' : 'hatch'})`} />
     </g>
   );
 });
@@ -87,7 +81,7 @@ export const FrontLines = memo(function FrontLines(props: {
     <g fill="none" strokeLinejoin="round" strokeLinecap="round">
       {showPrev && prev && prev.lines.map((l, i) => <path key={`p${i}`} d={l.d} stroke={FRONT_PREV} strokeWidth={1.6 * u} strokeDasharray={`${6 * u} ${5 * u}`} vectorEffect="non-scaling-stroke" opacity={0.75} />)}
       {front && showUncertainty && uncertaintyWorld > 0 &&
-        front.lines.filter((l) => l.q !== 'c').map((l, i) => <path key={`u${i}`} d={l.d} stroke={FRONT} strokeOpacity={0.13} strokeWidth={uncertaintyWorld * 2} />)}
+        front.lines.filter((l) => l.q !== 'c').map((l, i) => <path key={`u${i}`} d={l.d} stroke={FRONT} strokeOpacity={0.1} strokeWidth={uncertaintyWorld * 2} strokeLinecap="butt" />)}
       {front &&
         front.lines.map((l, i) => (
           <g key={`f${i}`} opacity={stale ? 0.7 : 1}>

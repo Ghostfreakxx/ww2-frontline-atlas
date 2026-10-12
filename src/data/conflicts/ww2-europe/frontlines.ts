@@ -9,6 +9,9 @@ export const frontlines: FrontlineSnapshot[] = [...eastFront1941, ...fronts1942t
 export const closingRoutes: Record<string, ClosingRoute> = { ...east1941Closing, ...closingRoutes1942 };
 
 /** Which territory snapshot defines the "home" territory used to compute occupied areas for a front. */
-export const frontTerritoryBasis: Record<string, { territory: string; defenderStatus: string[] }> = {
-  east: { territory: 'territory-1941-06-22', defenderStatus: ['soviet'] },
+export const frontTerritoryBasis: Record<string, { territory: string; defenderStatus: string[]; heldSide: 'axis' | 'allied'; from?: string }> = {
+  // Axis-held Soviet territory west of the Eastern Front.
+  east: { territory: 'territory-1941-06-22', defenderStatus: ['soviet'], heldSide: 'axis' },
+  // Allied-held (liberated or occupied) ground west of the Western Front, 1944–45.
+  west: { territory: 'territory-1941-06-22', defenderStatus: ['german-occupied', 'vichy', 'reich-annexed', 'reich'], heldSide: 'allied', from: '1944-06-01' },
 };

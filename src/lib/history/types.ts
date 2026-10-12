@@ -110,6 +110,8 @@ export interface FrontlineSnapshot extends Cited {
   date: ISODate;
   /** Last date the line may be shown (e.g. an armistice, or the start of a mobile phase with no documented line). */
   endsAt?: ISODate;
+  /** Hide the line this many days after its date (default STALE_LIMIT_DAYS); short for snapshots taken on the eve of an offensive. */
+  staleAfterDays?: number;
   label: string;
   description: string;
   uncertaintyKm: number;

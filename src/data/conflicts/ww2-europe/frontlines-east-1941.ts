@@ -13,7 +13,8 @@ const b = (lon: number, lat: number, note?: string): FrontPoint => ({ at: [lon, 
 const c = (lon: number, lat: number, note?: string): FrontPoint => ({ at: [lon, lat], q: 'c', note });
 
 // Closing routes used to build the "held" polygon west of the line (see scripts/build-control.mjs).
-export interface ClosingRoute { northHead?: LonLat[]; southTail?: LonLat[] }
+/** How to close a front line into the polygon of ground held on its 'west' side. `ring` replaces head/tail for lines that start and end on a coast (beachheads). */
+export interface ClosingRoute { northHead?: LonLat[]; southTail?: LonLat[]; ring?: LonLat[] }
 export const closingRoutes: Record<string, ClosingRoute> = {
   'east-1941-07-09': { northHead: [[21.0, 80], [21.0, 57.6], [23.4, 57.75], [24.3, 58.25]] },
   'east-1941-08-25': { northHead: [[26.0, 80], [26.0, 59.9], [28.9, 59.86]] },

@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
+import { copyText } from '@/lib/ui/platform';
 
 interface Props {
   code: string;
@@ -39,7 +40,7 @@ export function SharePanel({ code, token, listeners, onClose }: Props) {
     Promise.all([QRCode.toDataURL(displayUrl, opts), presenterUrl ? QRCode.toDataURL(presenterUrl, opts) : Promise.resolve(undefined)]).then(([d, p]) => setQr({ display: d, presenter: p }));
   }, [origin, displayUrl, presenterUrl]);
 
-  const copy = (t: string) => navigator.clipboard?.writeText(t);
+  const copy = (t: string) => copyText(t);
   const variants: [string, string][] = [
     ['Audience display (follows presenter layout)', displayUrl],
     ['OBS browser source — clean', `${displayUrl}&clean=1`],

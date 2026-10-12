@@ -2,7 +2,9 @@
 // usage: node scripts/dev/shoot-episode.mjs <base-url> <outDir> [filter e.g. "3,4"]
 import fs from 'node:fs';
 import { chromium } from 'playwright';
-import { barbarossaEpisode as ep } from '../../src/data/conflicts/ww2-europe/episodes/barbarossa.ts';
+import { barbarossaEpisode } from '../../src/data/conflicts/ww2-europe/episodes/barbarossa.ts';
+import { overviewEpisode } from '../../src/data/conflicts/ww2-europe/episodes/overview.ts';
+const ep = process.env.EPISODE === 'overview' ? overviewEpisode : barbarossaEpisode;
 import { sceneState } from '../../src/lib/episodes/apply.ts';
 import { initialState } from '../../src/lib/sync/state.ts';
 const [base, out, filter] = process.argv.slice(2);
