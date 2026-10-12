@@ -66,6 +66,12 @@ export function useSessionStream(code: string | null, role: 'presenter' | 'displ
       es.addEventListener('ping', () => {
         lastMessageAt.current = Date.now();
       });
+      // Hosted (serverless) streams end on schedule; reconnect at once and stay "live".
+      es.addEventListener('bye', () => {
+        es?.close();
+        es = null;
+        scheduleRetry(0);
+      });
       es.onerror = () => {
         es?.close();
         es = null;

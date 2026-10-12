@@ -7,15 +7,15 @@ export const dynamic = 'force-dynamic';
 type Ctx = { params: Promise<{ code: string }> };
 
 export async function GET(_req: Request, ctx: Ctx) {
-  const { code } = await ctx.params;
-  const s = getSession(code.toUpperCase());
+  const code = (await ctx.params).code.toUpperCase();
+  const s = await getSession(code);
   if (!s) return NextResponse.json({ error: 'not-found' }, { status: 404 });
-  return NextResponse.json({ state: s.state, serverTime: Date.now(), listeners: listenerCount(s) }, { headers: { 'Cache-Control': 'no-store' } });
+  return NextResponse.json({ state: s.state, serverTime: Date.now(), listeners: await listenerCount(code) }, { headers: { 'Cache-Control': 'no-store' } });
 }
 
 export async function PUT(req: Request, ctx: Ctx) {
-  const { code } = await ctx.params;
-  const s = getSession(code.toUpperCase());
+  const code = (await ctx.params).code.toUpperCase();
+  const s = await getSession(code);
   if (!s) return NextResponse.json({ error: 'not-found' }, { status: 404 });
   const token = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '') || null;
   if (!authorize(s, token)) return NextResponse.json({ error: 'forbidden' }, { status: 403 });
@@ -27,9 +27,10 @@ export async function PUT(req: Request, ctx: Ctx) {
   }
   if (!body.state || typeof body.state !== 'object' || typeof body.state.date !== 'string') return NextResponse.json({ error: 'bad-state' }, { status: 400 });
   try {
-    const state = updateState(s, body.state);
-    return NextResponse.json({ rev: state.rev, serverTime: Date.now(), listeners: listenerCount(s) }, { headers: { 'Cache-Control': 'no-store' } });
+    const state = await updateState(s, body.state);
+    return NextResponse.json({ rev: state.rev, serverTime: Date.now(), listeners: await listenerCount(code) }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 413 });
+    const msg = (e as Error).message;
+    return NextResponse.json({ error: msg }, { status: msg === 'state-too-large' ? 413 : 503 });
   }
 }

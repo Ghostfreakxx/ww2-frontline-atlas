@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   } catch {
     /* empty body = new session */
   }
-  const res = createSession(body);
+  const res = await createSession(body);
   if ('error' in res) return NextResponse.json(res, { status: res.error === 'code-in-use' ? 409 : 400 });
   return NextResponse.json({ ...res, serverTime: Date.now() }, { headers: { 'Cache-Control': 'no-store' } });
 }

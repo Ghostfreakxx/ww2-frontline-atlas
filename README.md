@@ -65,7 +65,14 @@ The **Episode** tab is the scene editor. A scene stores its date, camera, layout
 - Server-sent events with automatic reconnection (exponential backoff, a watchdog for silent drops such as iPad sleep, and resume when the page becomes visible). The display shows "Reconnecting…" while disconnected and catches up to the latest state.
 - Session state is persisted to `.data/sessions/` on the computer, so a server restart or an iPad reload resumes the same scene. If the server lost a session entirely, the iPad restores it from its own backup.
 - The display link only needs the session code (read-only). Changing the session requires the presenter key, which lives in the presenter link (`#k=…`) and on the iPad. Share the presenter link only between your own devices.
-- Run it on the presenting computer or another machine on your LAN. The in-memory session store is for a single Node process, so it is not meant for serverless hosting.
+- Run it on the presenting computer or another machine on your LAN with `npm start`: sessions live in that Node process and are saved to `.data/`. No database needed.
+
+### Hosting on Vercel
+The app deploys to Vercel as a normal Next.js project (`vercel.json` pins the framework). Live sync between the iPad and the display then needs shared storage, because each request may run in a different serverless instance:
+1. In the Vercel project open **Storage → Create Database → Upstash (Redis)** (free tier) and connect it to the project. This adds `KV_REST_API_URL` and `KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_URL`/`_TOKEN`), which the app picks up automatically.
+2. Redeploy. The start page shows a red notice while no storage is connected.
+
+In this mode sessions are kept for 14 days. Each open display polls Redis about three times a second (roughly 11,000 requests per display-hour, within the Upstash free tier for typical recording sessions). Streams are renewed every 50 s without visible reconnects. Test locally with `node scripts/dev/fake-upstash.mjs 8079` and `KV_REST_API_URL=http://localhost:8079 KV_REST_API_TOKEN=dev npm start`.
 
 ---
 

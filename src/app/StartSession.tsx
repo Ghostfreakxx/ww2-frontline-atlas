@@ -10,13 +10,15 @@ export default function StartSession() {
   const [qr, setQr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [storage, setStorage] = useState<string | null>(null);
 
   useEffect(() => {
     const here = window.location.origin;
     setOrigin(here);
     fetch('/api/info')
       .then((r) => r.json())
-      .then((j: { addresses: string[]; port: string }) => {
+      .then((j: { addresses: string[]; port: string; storage?: string }) => {
+        setStorage(j.storage ?? null);
         const lan = j.addresses.map((a) => `${window.location.protocol}//${a}${j.port && !['80', '443'].includes(j.port) ? `:${j.port}` : ''}`);
         setOrigins([here, ...lan.filter((o) => o !== here)]);
         if (/localhost|127\.0\.0\.1/.test(here) && lan[0]) setOrigin(lan[0]);
@@ -44,13 +46,24 @@ export default function StartSession() {
     }
   };
 
+  const warning =
+    storage === 'ephemeral' ? (
+      <p role="alert" className="card" style={{ marginTop: 18, borderColor: '#b3261e' }}>
+        <strong>Live sync needs shared storage on this host.</strong> This deployment runs on serverless functions without a database, so the iPad and the display may not see each other&apos;s session.
+        In the Vercel project open <em>Storage → Create → Upstash (Redis)</em> (free tier), connect it to this project and redeploy. Running <code>npm start</code> on your own computer needs no database.
+      </p>
+    ) : null;
+
   if (!session) {
     return (
+      <>
+      {warning}
       <div style={{ display: 'flex', gap: 12, marginTop: 22, flexWrap: 'wrap' }}>
         <button className="btn primary big" onClick={create} disabled={busy}>New session</button>
         <a className="btn big" href="/presenter">Start presenting on this device</a>
         {error && <p role="alert">{error}</p>}
       </div>
+      </>
     );
   }
   return (
