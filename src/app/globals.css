@@ -346,3 +346,52 @@ details summary {
 a.btn {
   text-decoration: none;
 }
+
+/* Audience display: stage wrapper with the local webcam and screen pen layered over the map. */
+.display-stage {
+  position: relative;
+}
+.display-camera {
+  position: absolute;
+  object-fit: cover;
+  background: #111;
+  pointer-events: none;
+}
+.display-camera.round {
+  border-radius: 50%;
+  border-style: solid;
+  border-color: #f2eee4;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  box-sizing: border-box;
+}
+.display-ink {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  touch-action: none;
+}
+.display-ink.active {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+.display-toolbar {
+  flex-wrap: wrap;
+  max-width: calc(100vw - 24px);
+  align-items: center;
+}
+.display-toolbar .toolbar-sep {
+  width: 1px;
+  align-self: stretch;
+  background: var(--line-2);
+}
+.display-toolbar .swatch-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+}
+.display-toolbar .swatch-btn.on {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px #000, 0 0 0 4px #fff;
+}

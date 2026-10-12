@@ -43,6 +43,20 @@ Frontline Atlas is an installable web app.
   - `&guides=1` — shows the camera area and the title-safe frame while you set up
 - Moving the mouse over the display reveals: **Fullscreen**, **Screenshot** (1920 × 1080 PNG), **Record tab** (WebM via the browser's tab capture) and **Guides**. Keys: `F` fullscreen, `S` screenshot, `G` guides.
 
+### Camera bubble and screen pen (no OBS needed)
+For a "slides with a round webcam" look:
+1. On the iPad press **Bubble** (top bar). The map fills the whole frame and a round camera area sits bottom-right; captions, legend and sources stay clear of it. The iPad shows the circle as a dashed outline in the audience frame.
+2. On the display computer move the mouse to the top-right and click **Camera** (or press `W`). The computer's webcam appears in the circle (in the 40% camera area for **Split**). Choose the camera and **Mirror** in the same toolbar. The setting is remembered on that computer. Add `&cam=1` to the display link to switch it on automatically.
+3. Click **Pen** (or press `P`) to draw straight on the display with the mouse, a pen tablet or a touch screen. Highlighter yellow is the default; keys `1`–`4` change colour, `Z` undoes, `C` clears, `Esc` stops drawing. The toolbar stays hidden while you draw unless you move to the top edge. Pen marks are cleared automatically when the presenter moves to the next step or scene.
+4. Record the display with **Record tab**, a screen recorder or an OBS *window* capture. **Screenshot** includes the webcam and the pen marks.
+
+The webcam and screen pen live only on that display computer and are not sent to the iPad. Drawings made on the iPad (which stay attached to places on the map) are separate.
+
+### Starting over
+**Start over** (circular-arrow button on the iPad) offers:
+- **Restart the episode**: back to scene 1, drawings removed on every screen, panels shown again.
+- **Blank map**: the whole map at the start of the timeline with all highlights and drawings cleared; **Next** then begins scene 1.
+
 ### 3. Recording with OBS
 1. Add a **Browser** source, URL = the *OBS — clean* link, width 1920, height 1080, FPS 60.
 2. Default layout: camera on the left 40% (768 × 1080), map on the right 60% (1152 × 1080). Put your camera source in the left 40%. If you use the transparent link, the camera can sit underneath.
@@ -56,7 +70,7 @@ No OBS? Use **Record tab** on the display (Chrome/Edge) or a screen recorder, an
 | --- | --- |
 | Bottom bar | Previous/next **dated event**, previous/next **scene step**, play/pause, speed (1–30 days/s), timeline 1939–45 / year / operation, date picker |
 | Left rail | Pan & zoom, freehand, arrow, circle, text label, 6 ink colours, 3 widths, undo/redo/clear, zoom ±, **reset view** |
-| Top bar | Live status + code + display count, output layout (Split / Full / Safe), **Hide UI** (clean frame), audience preview, share/QR, fullscreen, **lock** (hold to unlock) |
+| Top bar | Live status + code + display count, output layout (Split / Bubble / Full / Safe), **Start over**, **Hide UI** (clean frame), audience preview, share/QR, fullscreen, **lock** (hold to unlock) |
 | Side panel | **Scene** (scene list, build steps, presenter notes), **Forces** (army groups by date, commander, order of battle, lineage, compare), **Battles**, **Layers**, **Sources**, **Episode** (scene editor) |
 
 Gestures: one finger pans, two fingers pinch-zoom; the **Apple Pencil always draws** (even in pan mode) while fingers keep panning. Tap an army-group sector or a battle marker on the map to highlight it on the audience display.
@@ -165,6 +179,7 @@ The end-to-end suite covers:
 - touch panning
 - presentation lock
 - scene autosave, export and import, and save to the computer
+- camera bubble layout with a live webcam (fake camera), screen pen draw/undo/clear, start over
 - PWA: manifest and icons, service-worker caching, presenter opening offline, switching sessions
 - 1920×1080 PNG export
 - axe accessibility (no serious or critical issues)

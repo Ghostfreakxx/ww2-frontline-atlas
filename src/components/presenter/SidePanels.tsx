@@ -185,6 +185,7 @@ function LayoutThumb({ layout }: { layout: Layout }) {
       <rect width={192} height={108} fill="#111" rx={4} />
       {L.camera && <rect x={L.camera.x / 10} y={0} width={L.camera.w / 10} height={108} fill="#333" />}
       <rect x={L.map.x / 10} y={0} width={L.map.w / 10} height={108} fill="#cbbf9f" />
+      {L.bubble && <circle cx={L.bubble.cx / 10} cy={L.bubble.cy / 10} r={L.bubble.r / 10} fill="#333" stroke="#d8a64a" strokeWidth={1.5} />}
       {layout === 'map-safe' && <rect x={9.6} y={5.4} width={172.8} height={97.2} fill="none" stroke="#2a9d8f" strokeDasharray="3 3" />}
     </svg>
   );

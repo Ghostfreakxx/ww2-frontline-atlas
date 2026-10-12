@@ -228,6 +228,12 @@ export function MapStageInteractive(props: Props) {
         <text x={frame.x + 8} y={frame.y - 4} fill="#d8a64a" fontSize={12} fontFamily="var(--sans)" pointerEvents="none">
           AUDIENCE VIEW · {LAYOUTS[state.layout].label}
         </text>
+        {LAYOUTS[state.layout].bubble && (() => {
+          // Where the camera bubble covers the map on the audience display.
+          const b = LAYOUTS[state.layout].bubble!;
+          const k = frame.w / L.w;
+          return <circle cx={frame.x + b.cx * k} cy={frame.y + b.cy * k} r={b.r * k} fill="#101112" fillOpacity={0.35} stroke="#d8a64a" strokeWidth={1.5} strokeDasharray="6 5" pointerEvents="none" />;
+        })()}
       </AtlasMap>
       <div
         className="pres-map-input"

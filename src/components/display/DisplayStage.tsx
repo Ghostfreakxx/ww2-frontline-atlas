@@ -50,6 +50,9 @@ export const DisplayStage = forwardRef<SVGSVGElement, DisplayStageProps>(functio
   const safe = state.layout === 'map-safe';
   // Panel region: the map area, inset to the 90% title-safe frame in map-safe mode.
   const panelRegion: Region = safe ? { x: map.x + 96, y: map.y + 54, w: map.w - 192, h: map.h - 108 } : { ...map };
+  // Camera bubble: bottom-row panels (caption, legend, sources) stop short of the circle.
+  const bub = L.bubble;
+  const bottomRegion: Region = bub ? { ...panelRegion, w: bub.cx - bub.r - 24 - panelRegion.x } : panelRegion;
   const showUi = !state.hideUi;
   const scale = 1;
   const front = idx.frontsAt(date)[0];
@@ -86,9 +89,19 @@ export const DisplayStage = forwardRef<SVGSVGElement, DisplayStageProps>(functio
       data-layout={state.layout}
     >
       {!transparent && L.camera && <rect x={L.camera.x} y={L.camera.y} width={L.camera.w} height={L.camera.h} fill="#1b1d1f" />}
+      {bub && transparent && (
+        <defs>
+          <mask id={`${idPrefix}-bubble-hole`}>
+            <rect width={STAGE.w} height={STAGE.h} fill="#fff" />
+            <circle cx={bub.cx} cy={bub.cy} r={bub.r} fill="#000" />
+          </mask>
+        </defs>
+      )}
+      <g mask={bub && transparent ? `url(#${idPrefix}-bubble-hole)` : undefined}>
       <svg x={map.x} y={map.y} width={map.w} height={map.h} viewBox={`0 0 ${map.w} ${map.h}`} overflow="hidden">
         <AtlasMap idx={idx} geo={geo} state={state} date={date} camera={camera} width={map.w} height={map.h} frameH={map.h} idPrefix={idPrefix} now={now} arrowBorn={arrowBorn} />
       </svg>
+      </g>
       {showUi && (
         <g>
           {state.panels.title && <TitleBlock region={panelRegion} state={state} scale={scale} />}
@@ -109,10 +122,10 @@ export const DisplayStage = forwardRef<SVGSVGElement, DisplayStageProps>(functio
           )}
           {compareOn && <ComparePanel x={panelRegion.x + 40} y={topY} w={Math.min(panelRegion.w - 80, 1100)} idx={idx} ids={state.focus.formations} date={date} scale={scale} />}
           {state.panels.legend && !hierarchyOn && (
-            <Legend x={panelRegion.x + panelRegion.w - 40} y={panelRegion.y + panelRegion.h - sourceH - 24} state={state} statuses={statuses} scale={scale} hasFront={!!front} frontUnc={front?.uncertaintyKm ?? null} alliedHeld={idx.frontsAt(date).some((f) => geo.fronts.get(f.id)?.heldSide === 'allied')} axisHeld={idx.frontsAt(date).some((f) => geo.fronts.get(f.id)?.heldSide === 'axis')} />
+            <Legend x={bottomRegion.x + bottomRegion.w - (bub ? 0 : 40)} y={panelRegion.y + panelRegion.h - sourceH - 24} state={state} statuses={statuses} scale={scale} hasFront={!!front} frontUnc={front?.uncertaintyKm ?? null} alliedHeld={idx.frontsAt(date).some((f) => geo.fronts.get(f.id)?.heldSide === 'allied')} axisHeld={idx.frontsAt(date).some((f) => geo.fronts.get(f.id)?.heldSide === 'axis')} />
           )}
-          {state.panels.event && !compareOn && <EventCaption region={panelRegion} idx={idx} date={date} scale={scale} bottomOffset={sourceH} />}
-          {sourceText && <SourceLine region={{ ...map, y: map.y, h: map.h - (safe ? 54 : 0) }} text={sourceText} scale={scale} />}
+          {state.panels.event && !compareOn && <EventCaption region={bottomRegion} idx={idx} date={date} scale={scale} bottomOffset={sourceH} />}
+          {sourceText && <SourceLine region={{ ...map, y: map.y, w: bub ? bottomRegion.w : map.w, h: map.h - (safe ? 54 : 0) }} text={sourceText} scale={scale} />}
         </g>
       )}
       <rect key={`fade-${state.transition.seq}`} className="stage-fade" x={map.x} y={map.y} width={map.w} height={map.h} fill={PAPER} pointerEvents="none" />
@@ -123,6 +136,12 @@ export const DisplayStage = forwardRef<SVGSVGElement, DisplayStageProps>(functio
             <g>
               <rect x={L.camera.x + 1} y={L.camera.y + 1} width={L.camera.w - 2} height={L.camera.h - 2} fill="none" stroke="#e9c46a" strokeWidth={2} strokeDasharray="10 8" />
               <text x={L.camera.x + L.camera.w / 2} y={L.camera.h / 2} textAnchor="middle" fill="#e9c46a" fontSize={28}>CAMERA AREA</text>
+            </g>
+          )}
+          {bub && (
+            <g>
+              <circle cx={bub.cx} cy={bub.cy} r={bub.r} fill="none" stroke="#e9c46a" strokeWidth={2} strokeDasharray="10 8" />
+              <text x={bub.cx} y={bub.cy + 9} textAnchor="middle" fill="#e9c46a" fontSize={24}>CAMERA</text>
             </g>
           )}
           <rect x={96} y={54} width={1728} height={972} fill="none" stroke="#2a9d8f" strokeWidth={2} strokeDasharray="6 6" />

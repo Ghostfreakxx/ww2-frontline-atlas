@@ -6,7 +6,7 @@ import { addDays, formatDate } from '@/lib/history/query';
 import type { Camera, ISODate } from '@/lib/history/types';
 import { useGeo } from '@/lib/map/geodata';
 import { useFontsReady } from '@/lib/map/useStage';
-import { ANNOTATION_COLORS, LAYOUTS, effectiveDate, type Annotation, type PresentationState } from '@/lib/sync/state';
+import { ANNOTATION_COLORS, LAYOUTS, effectiveDate, initialState, type Annotation, type PresentationState } from '@/lib/sync/state';
 import { sceneState, stepPosition } from '@/lib/episodes/apply';
 import type { Episode } from '@/lib/episodes/types';
 import { useStageView } from '@/components/display/useStageView';
@@ -22,7 +22,7 @@ import { SharePanel } from './SharePanel';
 import { Icon } from './icons';
 import { toggleFullscreen } from '@/lib/ui/platform';
 
-const COLOR_NAMES = ['Red', 'Navy', 'Ochre', 'Green', 'Black', 'White'];
+const COLOR_NAMES = ['Red', 'Navy', 'Ochre', 'Green', 'Black', 'White', 'Highlighter yellow'];
 
 type Tab = 'scene' | 'forces' | 'battles' | 'layers' | 'sources' | 'edit';
 const TABS: { id: Tab; label: string; icon: keyof typeof Icon }[] = [
@@ -49,6 +49,7 @@ export default function PresenterApp() {
   const [locked, setLocked] = useState(false);
   const [selectedFormation, setSelectedFormation] = useState<string | null>(null);
   const [showShare, setShowShare] = useState(false);
+  const [showStartOver, setShowStartOver] = useState(false);
   const [preview, setPreview] = useState(false);
   const [undoStack, setUndoStack] = useState<Annotation[][]>([]);
   const [redoStack, setRedoStack] = useState<Annotation[][]>([]);
@@ -89,7 +90,11 @@ export default function PresenterApp() {
   );
   const nextPos = episode ? stepPosition(episode, state.sceneIndex, state.stepIndex, 1) : null;
   const prevPos = episode ? stepPosition(episode, state.sceneIndex, state.stepIndex, -1) : null;
-  const next = useCallback(() => nextPos && goto(nextPos.sceneIndex, nextPos.stepIndex), [nextPos, goto]);
+  // After "Start over → blank map" no scene is active: Next enters scene 1.
+  const next = useCallback(() => {
+    if (episode && !state.sceneId) return goto(0, 0);
+    if (nextPos) goto(nextPos.sceneIndex, nextPos.stepIndex);
+  }, [episode, state.sceneId, nextPos, goto]);
   const prev = useCallback(() => prevPos && goto(prevPos.sceneIndex, prevPos.stepIndex), [prevPos, goto]);
 
   const pauseAt = (s: PresentationState): PresentationState => ({ ...s, date: effectiveDate(s, stream.serverNow(), addDays), playback: { ...s.playback, playing: false, endDate: null } });
@@ -134,6 +139,35 @@ export default function PresenterApp() {
     const scene = episode?.scenes[state.sceneIndex];
     const c = scene?.base.camera ?? idx.pkg.defaultCamera;
     flyTo(c.lon, c.lat, c.zoom);
+  };
+  /** Start over: restart the episode at scene 1, or clear everything to a blank map at the start of the timeline. */
+  const startOver = (mode: 'episode' | 'blank') => {
+    setUndoStack([]);
+    setRedoStack([]);
+    setTool('pan');
+    setShowStartOver(false);
+    const now = stream.serverNow();
+    if (mode === 'episode' && episode) {
+      commit((s) => sceneState({ ...s, sceneId: null, hideUi: false, curtain: false, annotations: [], draft: null }, episode, 0, 0, now));
+      flash('Restarted from scene 1');
+      return;
+    }
+    commit((s) => {
+      const b = initialState();
+      const start = idx.pkg.range.start;
+      return {
+        ...b,
+        rev: s.rev,
+        layout: s.layout,
+        episodeId: s.episodeId,
+        sceneId: null,
+        date: start,
+        playback: { ...b.playback, anchorDate: start, anchorAt: now },
+        camera: { ...idx.pkg.defaultCamera, ms: 1400, seq: s.camera.seq + 1 },
+        transition: { seq: s.transition.seq + 1, kind: 'fade' },
+      };
+    });
+    flash('Cleared — blank map. Press Next to begin scene 1.');
   };
   const zoomBy = (f: number) => commit((s) => ({ ...s, camera: { ...s.camera, zoom: Math.max(0.6, Math.min(40, s.camera.zoom * f)), ms: 350, seq: s.camera.seq + 1 } }));
 
@@ -216,12 +250,13 @@ export default function PresenterApp() {
       }
     : { onClick: () => { setLocked(true); setTool('pan'); flash('Presentation locked — hold the lock to unlock'); } };
 
-  const scene = episode?.scenes[state.sceneIndex];
+  const scene = state.sceneId ? episode?.scenes[state.sceneIndex] : undefined;
   const nextLabel = useMemo(() => {
+    if (episode && !state.sceneId) return `Scene 1: ${episode.scenes[0]?.title ?? ''}`;
     if (!episode || !nextPos) return 'End';
     if (nextPos.sceneIndex !== state.sceneIndex) return `Scene ${nextPos.sceneIndex + 1}: ${episode.scenes[nextPos.sceneIndex].title}`;
     return scene?.steps[nextPos.stepIndex - 1]?.label ?? 'Next';
-  }, [episode, nextPos, state.sceneIndex, scene]);
+  }, [episode, nextPos, state.sceneIndex, state.sceneId, scene]);
   const operation = state.focus.operationId ? idx.pkg.operations.find((o) => o.id === state.focus.operationId) : idx.operationsAt(date).find((o) => o.major) ?? idx.operationsAt(date)[0];
 
   const statusText = stream.status === 'live' ? 'Live' : stream.status === 'not-found' ? 'Session lost — recovering' : stream.status === 'offline' ? 'Offline' : 'Reconnecting…';
@@ -251,14 +286,15 @@ export default function PresenterApp() {
         </div>
         <div className="top-actions">
           <div className="seg" role="group" aria-label="Output layout">
-            {(['split-right', 'full', 'map-safe'] as const).map((l) => (
-              <button key={l} aria-pressed={state.layout === l} disabled={locked} onClick={() => commit((s) => ({ ...s, layout: l }))}>{l === 'split-right' ? 'Split' : l === 'full' ? 'Full' : 'Safe'}</button>
+            {(['split-right', 'bubble', 'full', 'map-safe'] as const).map((l) => (
+              <button key={l} aria-pressed={state.layout === l} disabled={locked} onClick={() => commit((s) => ({ ...s, layout: l }))} title={LAYOUTS[l].description}>{l === 'split-right' ? 'Split' : l === 'bubble' ? 'Bubble' : l === 'full' ? 'Full' : 'Safe'}</button>
             ))}
           </div>
           <button className={`btn ${state.hideUi ? 'on' : ''}`} onClick={() => commit((s) => ({ ...s, hideUi: !s.hideUi }))} title="Hide all audience panels (H)" aria-label={state.hideUi ? 'Panels hidden — show audience panels' : 'Hide UI — hide all audience panels'} aria-pressed={state.hideUi}>
             {state.hideUi ? <Icon.eyeOff /> : <Icon.eye />}<span className="hide-sm">{state.hideUi ? 'Panels hidden' : 'Hide UI'}</span>
           </button>
           <button className={`btn ${preview ? 'on' : ''}`} onClick={() => setPreview((v) => !v)} title="Preview the audience output" aria-label="Preview the audience output" aria-pressed={preview}><Icon.monitor /><span className="hide-sm">Preview</span></button>
+          <button className="btn" onClick={() => setShowStartOver(true)} disabled={locked} title="Start over" aria-label="Start over"><Icon.restart /><span className="hide-sm">Start over</span></button>
           <button className="btn icon" onClick={() => setShowShare(true)} aria-label="Display link and QR code"><Icon.share /></button>
           <button className="btn icon" onClick={async () => { if (!(await toggleFullscreen())) flash('For fullscreen on iPad use Share → Add to Home Screen'); }} aria-label="Fullscreen"><Icon.expand /></button>
           <button className={`btn lock-btn ${locked ? 'on' : ''} ${holding ? 'holding' : ''}`} {...lockProps} aria-label={locked ? 'Locked. Hold to unlock' : 'Lock presentation'}>
@@ -371,7 +407,7 @@ export default function PresenterApp() {
           locked={locked}
           stepLabel={nextLabel}
           canPrev={!!prevPos}
-          canNext={!!nextPos}
+          canNext={!!nextPos || (!!episode && !state.sceneId)}
           operationRange={operation ? { start: operation.start, end: operation.end } : null}
           onPlay={togglePlay}
           onSpeed={setSpeed}
@@ -382,6 +418,27 @@ export default function PresenterApp() {
           onNextEvent={() => jumpEvent(1)}
         />
       </footer>
+      {showStartOver && (
+        <div className="sheet-backdrop" onClick={() => setShowStartOver(false)}>
+          <div className="sheet start-over" role="dialog" aria-modal="true" aria-label="Start over" onClick={(e) => e.stopPropagation()}>
+            <div className="row-between">
+              <h2>Start over?</h2>
+              <button className="btn icon" onClick={() => setShowStartOver(false)} aria-label="Close">✕</button>
+            </div>
+            <p className="muted">Drawings are removed on every screen. Your episode and its scenes are kept.</p>
+            <div className="start-over-options">
+              <button className="btn primary big" onClick={() => startOver('episode')} disabled={!episode}>
+                <strong>Restart the episode</strong>
+                <span>{episode ? `Back to scene 1 · ${episode.scenes[0]?.title ?? ''}` : 'No episode loaded'}</span>
+              </button>
+              <button className="btn big" onClick={() => startOver('blank')}>
+                <strong>Blank map</strong>
+                <span>Whole map, {formatDate(idx.pkg.range.start, 'short')}, all highlights and drawings cleared</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showShare && code && <SharePanel code={code} token={token} listeners={stream.listeners} onClose={() => setShowShare(false)} />}
       <div className="sr-only" aria-live="polite">{formatDate(date)} {LAYOUTS[state.layout].label}</div>
     </div>

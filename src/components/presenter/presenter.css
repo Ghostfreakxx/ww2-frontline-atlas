@@ -965,3 +965,29 @@
     display: none;
   }
 }
+
+.start-over-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 16px;
+}
+.start-over-options .btn {
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 4px;
+  padding: 16px 18px;
+  min-height: 96px;
+  height: auto;
+}
+.start-over-options .btn span {
+  font-size: 14px;
+  font-weight: 400;
+  opacity: 0.85;
+}
+@media (max-width: 700px) {
+  .start-over-options {
+    grid-template-columns: 1fr;
+  }
+}

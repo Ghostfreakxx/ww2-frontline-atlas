@@ -4,13 +4,15 @@ import type { Camera, ISODate, LonLat } from '../history/types.ts';
 // display. Everything that changes what the audience sees lives here; presenter-only state (notes,
 // lock, open tabs, undo stacks) stays on the iPad.
 
-export type Layout = 'split-right' | 'split-left' | 'full' | 'map-safe';
+export type Layout = 'split-right' | 'split-left' | 'full' | 'map-safe' | 'bubble';
 
-export const LAYOUTS: Record<Layout, { label: string; description: string; map: { x: number; y: number; w: number; h: number }; camera?: { x: number; y: number; w: number; h: number } }> = {
+type Rect = { x: number; y: number; w: number; h: number };
+export const LAYOUTS: Record<Layout, { label: string; description: string; map: Rect; camera?: Rect; /** Round camera inset over a full-frame map. */ bubble?: { cx: number; cy: number; r: number } }> = {
   'split-right': { label: 'Split · map right', description: 'Camera 40% left, map 60% right', map: { x: 768, y: 0, w: 1152, h: 1080 }, camera: { x: 0, y: 0, w: 768, h: 1080 } },
   'split-left': { label: 'Split · map left', description: 'Map 60% left, camera 40% right', map: { x: 0, y: 0, w: 1152, h: 1080 }, camera: { x: 1152, y: 0, w: 768, h: 1080 } },
   full: { label: 'Full-width map', description: 'Map fills the 16:9 frame', map: { x: 0, y: 0, w: 1920, h: 1080 } },
   'map-safe': { label: 'Map, title-safe', description: 'Full map with panels kept inside 90% title-safe area', map: { x: 0, y: 0, w: 1920, h: 1080 } },
+  bubble: { label: 'Map + camera bubble', description: 'Full map with a round camera in the bottom-right corner', map: { x: 0, y: 0, w: 1920, h: 1080 }, bubble: { cx: 1920 - 48 - 170, cy: 1080 - 48 - 170, r: 170 } },
 };
 export const STAGE = { w: 1920, h: 1080 };
 
@@ -145,6 +147,6 @@ export function effectiveDate(s: PresentationState, serverNow: number, addDays: 
   return s.playback.endDate && d > s.playback.endDate ? s.playback.endDate : d;
 }
 
-export const ANNOTATION_COLORS = ['#b3261e', '#1d3557', '#d4a017', '#2d6a4f', '#111111', '#ffffff'];
+export const ANNOTATION_COLORS = ['#b3261e', '#1d3557', '#d4a017', '#2d6a4f', '#111111', '#ffffff', '#e6f53a'];
 
 export const SESSION_CODE_RE = /^[A-HJ-NP-Z2-9]{6}$/;
