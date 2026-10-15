@@ -26,6 +26,10 @@ export class Player {
   private wallStart = 0;
   private tStart = 0;
   private activeClip: string | null = null;
+  // Sound goes through Web Audio gain nodes: iOS ignores element.volume, and this also allows >100 %.
+  private ac: AudioContext | null = null;
+  private gains = new Map<HTMLMediaElement, GainNode>();
+  private unlocked = new WeakSet<HTMLMediaElement>();
   t = 0;
   playing = false;
 
@@ -113,10 +117,59 @@ export class Player {
     this.opts.onTime?.(this.t, this.playing);
   }
 
+  private route(el: HTMLMediaElement) {
+    if (!this.ac || this.gains.has(el)) return;
+    try {
+      const g = this.ac.createGain();
+      this.ac.createMediaElementSource(el).connect(g).connect(this.ac.destination);
+      this.gains.set(el, g);
+    } catch {
+      /* already routed or unsupported: element volume is used instead */
+    }
+  }
+  private setVolume(el: HTMLMediaElement, v: number) {
+    const g = this.gains.get(el);
+    if (g) g.gain.value = Math.max(0, v);
+    else el.volume = Math.max(0, Math.min(1, v));
+  }
+
+  /**
+   * Must run inside the user's tap/click: Safari only lets media start with sound from a user gesture,
+   * and later clips start from the animation loop. Each element is started and paused once here (silently).
+   */
+  private unlock() {
+    if (this.opts.muted) return;
+    const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!this.ac && AC) this.ac = new AC();
+    void this.ac?.resume();
+    const els: HTMLMediaElement[] = [];
+    for (const c of this.project.clips) if (this.opts.media.get(c.mediaId)?.kind === 'video') els.push(this.video(c.mediaId)!);
+    for (const a of this.project.audio) {
+      const el = this.audioEl(a.id, a.mediaId);
+      if (el) els.push(el);
+    }
+    for (const el of els) {
+      if (!el) continue;
+      this.route(el);
+      if (this.unlocked.has(el) || !el.paused) continue;
+      this.unlocked.add(el);
+      this.setVolume(el, 0);
+      el.play().then(() => {
+        if (!this.playing || !this.isActive(el)) el.pause();
+      }).catch(() => this.unlocked.delete(el));
+    }
+  }
+  private isActive(el: HTMLMediaElement) {
+    const hit = clipAt(this.project, this.t);
+    if (hit && this.videos.get(hit.clip.mediaId) === el) return true;
+    return [...this.music.entries()].some(([id, a]) => a === el && this.project.audio.some((x) => x.id === id && this.t >= x.start && this.t < x.start + (x.out - x.in)));
+  }
+
   play() {
     const end = projectDuration(this.project);
     if (end <= 0) return;
     if (this.t >= end - 0.05) this.t = 0;
+    this.unlock();
     this.playing = true;
     this.wallStart = performance.now();
     this.tStart = this.t;
@@ -127,6 +180,8 @@ export class Player {
       this.step();
       this.raf = requestAnimationFrame(tick);
     };
+    // First step synchronously, still inside the user's gesture.
+    this.step();
     this.raf = requestAnimationFrame(tick);
   }
 
@@ -152,13 +207,14 @@ export class Player {
       const m = this.opts.media.get(hit.clip.mediaId);
       if (m?.kind === 'video') {
         const v = this.video(hit.clip.mediaId)!;
-        v.volume = Math.max(0, Math.min(1, hit.clip.volume));
+        this.setVolume(v, hit.clip.volume);
         v.muted = !!this.opts.muted || hit.clip.volume <= 0;
         if (this.activeClip !== hit.clip.id) {
-          // Entering a clip: start its video at the right point.
+          // Entering a clip: start its video at the right point (no seek when it is already there,
+          // e.g. the second half of a split clip).
           this.activeClip = hit.clip.id;
           for (const [id, other] of this.videos) if (id !== hit.clip.mediaId && !other.paused) other.pause();
-          v.currentTime = hit.source;
+          if (Math.abs(v.currentTime - hit.source) > 0.08) v.currentTime = hit.source;
           v.play().catch(() => {});
         } else if (!v.paused && !v.seeking && v.readyState >= 3) {
           // The video drives the clock while it plays (keeps sound and picture together).
@@ -189,7 +245,7 @@ export class Player {
       const g = audioGainAt(a, t, musicEnd);
       const inside = t >= a.start && t < a.start + (a.out - a.in) && t < musicEnd;
       if (inside && !this.opts.muted) {
-        el.volume = Math.max(0, Math.min(1, g));
+        this.setVolume(el, g);
         const want = a.in + (t - a.start);
         if (el.paused) {
           el.currentTime = want;
@@ -224,5 +280,8 @@ export class Player {
     this.videos.clear();
     this.music.clear();
     this.images.clear();
+    void this.ac?.close().catch(() => {});
+    this.ac = null;
+    this.gains.clear();
   }
 }

@@ -1,5 +1,6 @@
 'use client';
 import { ArrayBufferTarget as Mp4Target, Muxer as Mp4Muxer } from 'mp4-muxer';
+import { ALL_FORMATS, AudioBufferSink, BlobSource, Input, VideoSampleSink, type VideoSample } from 'mediabunny';
 import { ArrayBufferTarget as WebmTarget, Muxer as WebmMuxer } from 'webm-muxer';
 import type { MediaItem, Project, VideoClip } from './types.ts';
 import { TRANSITION_S } from './types.ts';
@@ -43,7 +44,15 @@ export async function mixAudio(p: Project, media: Map<string, MediaItem>, getBlo
     if (!decoded.has(id)) {
       try {
         const blob = await getBlob(id);
-        decoded.set(id, blob ? await ctx.decodeAudioData(await blob.arrayBuffer()) : null);
+        let buf: AudioBuffer | null = null;
+        if (blob) {
+          try {
+            buf = await ctx.decodeAudioData(await blob.arrayBuffer());
+          } catch {
+            buf = await decodeAudioFallback(blob, ctx);
+          }
+        }
+        decoded.set(id, buf);
       } catch {
         decoded.set(id, null); // a clip without a sound track
       }
@@ -134,6 +143,157 @@ const waitFor = (el: EventTarget, ev: string, ms = 4000) =>
     el.addEventListener(ev, () => (clearTimeout(t), resolve()), { once: true });
   });
 
+/** Direct decoding of a media file (WebCodecs VideoDecoder via a demuxer): fast, frame-exact, handles rotation. */
+interface Decoder {
+  input: Input;
+  sink: VideoSampleSink;
+  /** The file's first timestamp: source times are relative to it. */
+  first: number;
+}
+async function openDecoder(blob: Blob): Promise<Decoder | null> {
+  if (typeof VideoDecoder === 'undefined') return null;
+  let input: Input | null = null;
+  try {
+    input = new Input({ source: new BlobSource(blob), formats: ALL_FORMATS });
+    const track = await input.getPrimaryVideoTrack();
+    if (!track || !(await track.canDecode())) throw new Error('cannot decode');
+    return { input, sink: new VideoSampleSink(track), first: await track.getFirstTimestamp() };
+  } catch {
+    input?.dispose();
+    return null;
+  }
+}
+
+/**
+ * Walks a clip's decoded frames in order and returns the frame showing at each (increasing) source time.
+ * Sequential decoding only — per-timestamp lookups need keyframe indexes, which MediaRecorder WebM
+ * files (e.g. "Record tab") often lack.
+ */
+class SequentialFrames {
+  private it: AsyncIterator<VideoSample>;
+  private cur: VideoSample | null = null;
+  private peek: VideoSample | null = null;
+  private done = false;
+  private started = false;
+  constructor(sink: VideoSampleSink, private first: number, start: number) {
+    this.it = sink.samples(Math.max(0, start + first - 0.5))[Symbol.asyncIterator]();
+  }
+  private async pull() {
+    if (this.done) return null;
+    const r = await this.it.next();
+    if (r.done) {
+      this.done = true;
+      return null;
+    }
+    return r.value;
+  }
+  /** The frame at source time `t` (relative to the file start). The returned sample stays valid until the next call. */
+  async at(t: number): Promise<VideoSample | null> {
+    const target = t + this.first + 1e-4;
+    if (!this.started) {
+      this.started = true;
+      this.peek = await this.pull();
+    }
+    while (this.peek && this.peek.timestamp <= target) {
+      this.cur?.close();
+      this.cur = this.peek;
+      this.peek = await this.pull();
+    }
+    // Before the first decoded frame: show the first one rather than nothing.
+    return this.cur ?? this.peek;
+  }
+  async close() {
+    await this.it.return?.(undefined).catch(() => {});
+    this.cur?.close();
+    this.peek?.close();
+    this.cur = this.peek = null;
+  }
+}
+
+/** Decode a file's sound into one AudioBuffer when the browser's decodeAudioData cannot (e.g. some MOV files). */
+async function decodeAudioFallback(blob: Blob, ctx: BaseAudioContext): Promise<AudioBuffer | null> {
+  const input = new Input({ source: new BlobSource(blob), formats: ALL_FORMATS });
+  try {
+    const track = await input.getPrimaryAudioTrack();
+    if (!track || !(await track.canDecode())) return null;
+    const first = await track.getFirstTimestamp();
+    const parts: { buffer: AudioBuffer; timestamp: number }[] = [];
+    for await (const wrapped of new AudioBufferSink(track).buffers()) parts.push(wrapped);
+    if (!parts.length) return null;
+    const rate = parts[0].buffer.sampleRate;
+    const channels = Math.max(...parts.map((x) => x.buffer.numberOfChannels));
+    const last = parts[parts.length - 1];
+    const length = Math.ceil((last.timestamp - first) * rate) + last.buffer.length;
+    const out = ctx.createBuffer(channels, length, rate);
+    for (const { buffer, timestamp } of parts) {
+      const at = Math.max(0, Math.round((timestamp - first) * rate));
+      for (let ch = 0; ch < channels; ch++) out.getChannelData(ch).set(buffer.getChannelData(Math.min(ch, buffer.numberOfChannels - 1)).subarray(0, Math.max(0, length - at)), at);
+    }
+    return out;
+  } catch {
+    return null;
+  } finally {
+    input.dispose();
+  }
+}
+
+/**
+ * Reads a video's frames in order for export. Seeking every frame is slow, and very slow in WebM
+ * files without a seek index (MediaRecorder output, e.g. "Record tab"), where each seek scans from
+ * the start. Instead the muted video plays fast and pauses on each decoded frame
+ * (requestVideoFrameCallback); exact seeks are used only for jumps (a new clip, a cut back) or if
+ * playback overshoots.
+ */
+class FrameReader {
+  private last = -1;
+  private readonly stepping: boolean;
+  constructor(private v: HTMLVideoElement) {
+    this.stepping = 'requestVideoFrameCallback' in HTMLVideoElement.prototype;
+    v.playbackRate = 8;
+  }
+  private async seek(t: number) {
+    this.v.pause();
+    this.v.currentTime = t;
+    await waitFor(this.v, 'seeked');
+    this.last = t;
+  }
+  private next(): Promise<boolean> {
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = (ok: boolean) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        this.v.removeEventListener('ended', onEnd);
+        resolve(ok);
+      };
+      const onEnd = () => finish(false);
+      // No frame (hidden tab, end of file): fall back to seeking.
+      const timer = setTimeout(() => finish(false), 2500);
+      this.v.addEventListener('ended', onEnd, { once: true });
+      this.v.requestVideoFrameCallback((_now, meta) => {
+        this.v.pause();
+        this.last = meta.mediaTime;
+        finish(true);
+      });
+      this.v.play().catch(() => finish(false));
+    });
+  }
+  /** Show the frame for source time `target`. */
+  async at(target: number, frameDur: number) {
+    const tol = frameDur / 2;
+    if (!this.stepping) {
+      if (Math.abs(this.v.currentTime - target) > 0.0005) await this.seek(target);
+      return;
+    }
+    if (this.last < 0 || target < this.last - tol || target > this.last + 2) return this.seek(target);
+    for (let guard = 0; this.last < target - tol && guard < 600; guard++) {
+      if (!(await this.next())) return this.seek(target);
+    }
+    if (this.last > target + 3 * frameDur) await this.seek(target);
+  }
+}
+
 export async function exportProject(
   p: Project,
   media: Map<string, MediaItem>,
@@ -155,7 +315,7 @@ export async function exportProject(
   }
   try {
     if (plan) {
-      const blob = await encodeWebCodecs(p, media, urls, audio, plan, onProgress, signal);
+      const blob = await encodeWebCodecs(p, media, urls, getBlob, audio, plan, onProgress, signal);
       return { blob, ext: plan.container, method: 'webcodecs', seconds: (performance.now() - started) / 1000 };
     }
     const r = await encodeRealtime(p, media, urls, audio, onProgress, signal);
@@ -165,7 +325,7 @@ export async function exportProject(
   }
 }
 
-async function encodeWebCodecs(p: Project, media: Map<string, MediaItem>, urls: Map<string, string>, audio: AudioBuffer, plan: CodecPlan, onProgress: (pr: ExportProgress) => void, signal: AbortSignal): Promise<Blob> {
+async function encodeWebCodecs(p: Project, media: Map<string, MediaItem>, urls: Map<string, string>, getBlob: (id: string) => Promise<Blob | undefined>, audio: AudioBuffer, plan: CodecPlan, onProgress: (pr: ExportProgress) => void, signal: AbortSignal): Promise<Blob> {
   const { w: W, h: H } = frameSize(p);
   const fps = p.fps;
   const duration = projectDuration(p);
@@ -210,16 +370,27 @@ async function encodeWebCodecs(p: Project, media: Map<string, MediaItem>, urls: 
     ad.close();
   }
 
-  // Video, frame by frame: seek each clip's video to the exact source time and draw.
+  // Video, frame by frame.
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext('2d', { alpha: false })!;
+  const decoders = new Map<string, Decoder>();
   const videos = new Map<string, HTMLVideoElement>();
+  const readers = new Map<string, FrameReader>();
   const images = new Map<string, ImageBitmap>();
+  const stats = { read: 0, draw: 0, encode: 0, decoded: 0, fallback: 0 };
+  (globalThis as unknown as { __atlasExportStats?: typeof stats }).__atlasExportStats = stats;
   for (const [id, url] of urls) {
     const m = media.get(id);
     if (m?.kind === 'video' && p.clips.some((c) => c.mediaId === id)) {
+      const blob = await getBlob(id);
+      const dec = blob ? await openDecoder(blob) : null;
+      if (dec) {
+        decoders.set(id, dec);
+        continue;
+      }
+      // The browser cannot decode this file directly: read it through a <video> element instead.
       const v = document.createElement('video');
       v.muted = true;
       v.playsInline = true;
@@ -227,13 +398,33 @@ async function encodeWebCodecs(p: Project, media: Map<string, MediaItem>, urls: 
       v.src = url;
       await waitFor(v, 'loadeddata', 10000);
       videos.set(id, v);
+      readers.set(id, new FrameReader(v));
     } else if (m?.kind === 'image') {
       images.set(id, await createImageBitmap(await (await fetch(url)).blob()));
     }
   }
+
+  // Which clip and source time each output frame shows (middle of the frame's interval, inside the clip).
+  const plan2 = Array.from({ length: frames }, (_, n) => {
+    const hit = clipAt(p, n / fps);
+    return hit ? { clip: hit.index, src: Math.min(hit.clip.out - 0.001, hit.source + 0.5 / fps) } : null;
+  });
+
+  let current: VideoSample | null = null;
+  let seq: SequentialFrames | null = null;
+  let seqClip = -1;
+  const closeIter = async () => {
+    current = null;
+    await seq?.close();
+    seq = null;
+  };
   const source = (clip: VideoClip): Source | null => {
     const img = images.get(clip.mediaId);
     if (img) return { el: img, w: img.width, h: img.height };
+    if (decoders.has(clip.mediaId)) {
+      const smp = current;
+      return smp ? { w: smp.displayWidth, h: smp.displayHeight, draw: (c, x, y, w, h) => smp.draw(c, x, y, w, h) } : null;
+    }
     const v = videos.get(clip.mediaId);
     return v && v.videoWidth ? { el: v, w: v.videoWidth, h: v.videoHeight } : null;
   };
@@ -242,23 +433,36 @@ async function encodeWebCodecs(p: Project, media: Map<string, MediaItem>, urls: 
       if (signal.aborted) throw new DOMException('Export cancelled', 'AbortError');
       if (failure) throw failure;
       const t = n / fps;
-      const hit = clipAt(p, t);
-      if (hit) {
-        const v = videos.get(hit.clip.mediaId);
-        if (v) {
-          // Sample the middle of the output frame's interval, clamped inside the clip.
-          const target = Math.min(hit.clip.out - 0.001, hit.source + 0.5 / fps);
-          if (Math.abs(v.currentTime - target) > 0.0005) {
-            v.currentTime = target;
-            await waitFor(v, 'seeked');
+      const f = plan2[n];
+      const t0 = performance.now();
+      if (f) {
+        const clip = p.clips[f.clip];
+        const dec = decoders.get(clip.mediaId);
+        if (dec) {
+          if (seqClip !== f.clip) {
+            // New clip: one sequential decoding pass from its in point.
+            await closeIter();
+            seqClip = f.clip;
+            seq = new SequentialFrames(dec.sink, dec.first, f.src);
           }
+          current = await seq!.at(f.src);
+          stats.decoded++;
+        } else {
+          const reader = readers.get(clip.mediaId);
+          if (reader) await reader.at(f.src, 1 / fps);
+          stats.fallback++;
         }
       }
+      stats.read += performance.now() - t0;
+      const t1 = performance.now();
       drawFrame(ctx, W, H, { project: p, t, media, source });
+      stats.draw += performance.now() - t1;
+      const t2 = performance.now();
       const frame = new VideoFrame(canvas, { timestamp: Math.round((n * 1e6) / fps), duration: Math.round(1e6 / fps) });
       venc.encode(frame, { keyFrame: n % (fps * 2) === 0 });
       frame.close();
       while (venc.encodeQueueSize > 8) await new Promise((r) => setTimeout(r, 4));
+      stats.encode += performance.now() - t2;
       if (n % 5 === 0) onProgress({ phase: 'video', done: n, total: frames });
     }
     onProgress({ phase: 'finishing', done: frames, total: frames });
@@ -272,6 +476,8 @@ async function encodeWebCodecs(p: Project, media: Map<string, MediaItem>, urls: 
     webm!.finalize();
     return new Blob([webm!.target.buffer], { type: 'video/webm' });
   } finally {
+    await closeIter();
+    for (const d of decoders.values()) d.input.dispose();
     for (const v of videos.values()) {
       v.removeAttribute('src');
       v.load();

@@ -5,7 +5,8 @@ import { clipAt, clipLen } from './timeline.ts';
 // Draws one frame of a project onto a 2D canvas. Shared by the live preview and the exporter so the
 // exported video matches what was seen while editing.
 
-export type Source = { el: CanvasImageSource; w: number; h: number };
+/** A frame to draw: an image/video element, or a decoded frame that draws itself (handles rotation). */
+export type Source = { el?: CanvasImageSource; w: number; h: number; draw?: (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) => void };
 
 export interface FrameInput {
   project: Project;
@@ -22,6 +23,8 @@ export interface FrameInput {
 const SANS = "'Atlas Sans', 'IBM Plex Sans Condensed', 'Arial Narrow', system-ui, sans-serif";
 const SERIF = "'Atlas Serif', 'Source Serif 4', Georgia, serif";
 
+const FILTERS = typeof document !== 'undefined' && 'filter' in (document.createElement('canvas').getContext('2d') ?? {});
+
 export function frameSize(p: Project) {
   return ASPECTS[p.aspect];
 }
@@ -33,7 +36,8 @@ export function drawClip(ctx: CanvasRenderingContext2D, W: number, H: number, cl
   const h = src.h * s;
   const x = (W - w) / 2 + clip.x * W;
   const y = (H - h) / 2 + clip.y * H;
-  ctx.drawImage(src.el, x, y, w, h);
+  if (src.draw) src.draw(ctx, x, y, w, h);
+  else if (src.el) ctx.drawImage(src.el, x, y, w, h);
 }
 
 /** Opacity of the black/white transition overlay at time t, and its colour. */
@@ -64,9 +68,12 @@ export function drawFrame(ctx: CanvasRenderingContext2D, W: number, H: number, i
       if (hit.clip.fit === 'fit') {
         // Blurred fill behind letterboxed footage, as in most Reels.
         ctx.save();
-        ctx.filter = 'blur(40px) brightness(0.55)';
+        // Canvas filters are missing in some Safari versions: then the bars are just darkened, not blurred.
+        if (FILTERS) ctx.filter = `blur(${Math.round(W / 27)}px)`;
         drawClip(ctx, W, H, { ...hit.clip, fit: 'fill', zoom: 1.1, x: 0, y: 0 }, src);
         ctx.restore();
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.fillRect(0, 0, W, H);
       }
       drawClip(ctx, W, H, hit.clip, src);
     }

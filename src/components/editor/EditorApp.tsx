@@ -17,30 +17,55 @@ export type Update = (fn: (p: Project) => Project, opts?: { transient?: boolean 
 
 const LAST_KEY = 'atlas.editor.lastProject';
 
-/** Undo/redo over whole-project snapshots. Transient updates (mid-drag) replace the present without a history entry. */
-function useHistory(initial: Project) {
-  const [state, setState] = useState({ past: [] as Project[], present: initial, future: [] as Project[] });
-  const dragBase = useRef<Project | null>(null);
-  const update: Update = useCallback((fn, opts) => {
-    setState((s) => {
-      const next = { ...fn(s.present), updatedAt: Date.now() };
-      if (opts?.transient) {
-        dragBase.current ??= s.present;
-        return { ...s, present: next };
-      }
-      const base = dragBase.current ?? s.present;
-      dragBase.current = null;
-      return { past: [...s.past.slice(-80), base], present: next, future: [] };
-    });
+/**
+ * Undo/redo over whole-project snapshots. Transient updates (mid-drag, typing) replace the present
+ * without a history entry; the next normal update records one entry for the whole gesture.
+ * (No refs are touched inside state updaters: React may run updaters twice in development.)
+ */
+function useHistory(initial: () => Project) {
+  type H = { past: Project[]; present: Project; future: Project[] };
+  const [hist, setHist] = useState<H>(() => ({ past: [], present: initial(), future: [] }));
+  const ref = useRef(hist);
+  const gestureBase = useRef<Project | null>(null);
+  const commit = useCallback((h: H) => {
+    ref.current = h;
+    setHist(h);
   }, []);
-  const undo = useCallback(() => setState((s) => (s.past.length ? { past: s.past.slice(0, -1), present: s.past[s.past.length - 1], future: [s.present, ...s.future] } : s)), []);
-  const redo = useCallback(() => setState((s) => (s.future.length ? { past: [...s.past, s.present], present: s.future[0], future: s.future.slice(1) } : s)), []);
-  const reset = useCallback((p: Project) => setState({ past: [], present: p, future: [] }), []);
-  return { project: state.present, update, undo, redo, reset, canUndo: state.past.length > 0, canRedo: state.future.length > 0 };
+  const update: Update = useCallback((fn, opts) => {
+    const h = ref.current;
+    const next = fn(h.present);
+    if (opts?.transient) {
+      if (next === h.present) return;
+      gestureBase.current ??= h.present;
+      return commit({ ...h, present: { ...next, updatedAt: Date.now() } });
+    }
+    const base = gestureBase.current ?? h.present;
+    gestureBase.current = null;
+    const present = next === h.present ? next : { ...next, updatedAt: Date.now() };
+    if (present === base) return; // nothing changed (e.g. a tap without a drag)
+    commit({ past: [...h.past.slice(-80), base], present, future: [] });
+  }, [commit]);
+  const undo = useCallback(() => {
+    const h = ref.current;
+    if (!h.past.length) return;
+    gestureBase.current = null;
+    commit({ past: h.past.slice(0, -1), present: h.past[h.past.length - 1], future: [h.present, ...h.future] });
+  }, [commit]);
+  const redo = useCallback(() => {
+    const h = ref.current;
+    if (!h.future.length) return;
+    gestureBase.current = null;
+    commit({ past: [...h.past, h.present], present: h.future[0], future: h.future.slice(1) });
+  }, [commit]);
+  const reset = useCallback((p: Project) => {
+    gestureBase.current = null;
+    commit({ past: [], present: p, future: [] });
+  }, [commit]);
+  return { project: hist.present, update, undo, redo, reset, canUndo: hist.past.length > 0, canRedo: hist.future.length > 0 };
 }
 
 export default function EditorApp() {
-  const h = useHistory(newProject());
+  const h = useHistory(() => newProject());
   const { project, update } = h;
   const [loaded, setLoaded] = useState(false);
   const [media, setMedia] = useState<MediaItem[]>([]);
